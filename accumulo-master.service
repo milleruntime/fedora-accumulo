@@ -1,0 +1,11 @@
+[Unit]
+Description=Apache Accumulo Master service
+After=syslog.target network.target
+
+[Service]
+User=accumulo
+Group=accumulo
+ExecStart=/usr/bin/accumulo-master
+
+[Install]
+WantedBy=multi-user.target

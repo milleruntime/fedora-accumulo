@@ -1,0 +1,27 @@
+diff --git a/minicluster/src/main/java/org/apache/accumulo/minicluster/impl/MiniAccumuloClusterImpl.java b/minicluster/src/main/java/org/apache/accumulo/minicluster/impl/MiniAccumuloClusterImpl.java
+index ce482f5..9730c3e 100644
+--- a/minicluster/src/main/java/org/apache/accumulo/minicluster/impl/MiniAccumuloClusterImpl.java
++++ b/minicluster/src/main/java/org/apache/accumulo/minicluster/impl/MiniAccumuloClusterImpl.java
+@@ -653,7 +653,8 @@ public class MiniAccumuloClusterImpl implements AccumuloCluster {
+ 
+   @Override
+   public ClientConfiguration getClientConfig() {
+-    return new ClientConfiguration(Arrays.asList(new MapConfiguration(config.getSiteConfig()))).withInstance(this.getInstanceName()).withZkHosts(
++    MapConfiguration array = new MapConfiguration((Map<String, Object>)(Map<String, ?>)config.getSiteConfig());
++    return new ClientConfiguration(Arrays.asList(array)).withInstance(this.getInstanceName()).withZkHosts(
+         this.getZooKeepers());
+   }
+ 
+diff --git a/pom.xml b/pom.xml
+index b314ff0..436db08 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -171,7 +171,7 @@
+       <dependency>
+         <groupId>commons-configuration</groupId>
+         <artifactId>commons-configuration</artifactId>
+-        <version>1.6</version>
++        <version>1.9</version>
+       </dependency>
+       <dependency>
+         <groupId>commons-httpclient</groupId>

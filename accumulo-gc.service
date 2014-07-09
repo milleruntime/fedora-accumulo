@@ -1,0 +1,11 @@
+[Unit]
+Description=Apache Accumulo Garbage Collector service
+After=syslog.target network.target
+
+[Service]
+User=accumulo
+Group=accumulo
+ExecStart=/usr/bin/accumulo-gc
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,406 @@
+From 802314463a82fb35c7a7839949129206cd6d16e0 Mon Sep 17 00:00:00 2001
+From: Christopher Tubbs <ctubbsii@apache.org>
+Date: Thu, 15 May 2014 20:11:44 -0400
+Subject: [PATCH] ACCUMULO-2808 Update to Jetty 9
+
+  Includes packaging improvements for the assembly, so that it will not
+  interfere with hadoop-provided libraries, including bundling jetty and slf4j
+  jars.
+---
+ assemble/pom.xml                                   | 36 ++++++++++++
+ assemble/src/main/assemblies/component.xml         | 13 ++++-
+ conf/templates/accumulo-site.xml                   |  4 +-
+ pom.xml                                            | 38 ++++++++++--
+ server/monitor/pom.xml                             | 36 +++++++++---
+ .../apache/accumulo/monitor/EmbeddedWebServer.java | 67 +++++++++++-----------
+ start/pom.xml                                      |  4 +-
+ test/pom.xml                                       |  4 +-
+ 8 files changed, 148 insertions(+), 54 deletions(-)
+
+diff --git a/assemble/pom.xml b/assemble/pom.xml
+index 9ebd2de..b918bea 100644
+--- a/assemble/pom.xml
++++ b/assemble/pom.xml
+@@ -44,6 +44,10 @@
+       <artifactId>guava</artifactId>
+     </dependency>
+     <dependency>
++      <groupId>javax.servlet</groupId>
++      <artifactId>javax.servlet-api</artifactId>
++    </dependency>
++    <dependency>
+       <groupId>jline</groupId>
+       <artifactId>jline</artifactId>
+     </dependency>
+@@ -120,6 +124,38 @@
+       <groupId>org.apache.thrift</groupId>
+       <artifactId>libthrift</artifactId>
+     </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-http</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-io</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-security</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-server</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-servlet</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-util</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.slf4j</groupId>
++      <artifactId>slf4j-api</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.slf4j</groupId>
++      <artifactId>slf4j-log4j12</artifactId>
++    </dependency>
+   </dependencies>
+   <profiles>
+     <profile>
+diff --git a/assemble/src/main/assemblies/component.xml b/assemble/src/main/assemblies/component.xml
+index 747444b..7efa48b 100644
+--- a/assemble/src/main/assemblies/component.xml
++++ b/assemble/src/main/assemblies/component.xml
+@@ -27,13 +27,22 @@
+       <useTransitiveDependencies>false</useTransitiveDependencies>
+       <includes>
+         <include>${groupId}:${artifactId}-*</include>
+-        <include>org.apache.commons:commons-math</include>
+-        <include>org.apache.commons:commons-vfs2</include>
+         <include>com.beust:jcommander</include>
+         <include>com.google.code.gson:gson</include>
+         <include>com.google.guava:guava</include>
++        <include>javax.servlet:javax.servlet-api</include>
+         <include>jline:jline</include>
++        <include>org.apache.commons:commons-math</include>
++        <include>org.apache.commons:commons-vfs2</include>
+         <include>org.apache.thrift:libthrift</include>
++        <include>org.eclipse.jetty:jetty-http</include>
++        <include>org.eclipse.jetty:jetty-io</include>
++        <include>org.eclipse.jetty:jetty-security</include>
++        <include>org.eclipse.jetty:jetty-server</include>
++        <include>org.eclipse.jetty:jetty-servlet</include>
++        <include>org.eclipse.jetty:jetty-util</include>
++        <include>org.slf4j:slf4j-api</include>
++        <include>org.slf4j:slf4j-log4j12</include>
+       </includes>
+       <excludes>
+         <exclude>${groupId}:${artifactId}-docs</exclude>
+diff --git a/conf/templates/accumulo-site.xml b/conf/templates/accumulo-site.xml
+index 052ed7e..08c905b 100644
+--- a/conf/templates/accumulo-site.xml
++++ b/conf/templates/accumulo-site.xml
+@@ -110,7 +110,7 @@ ${mvnProjBaseDir}
+ 
+       <!-- Hadoop 2 requirements -->
+       $HADOOP_PREFIX/share/hadoop/common/[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/common/lib/[^.].*.jar,
++      $HADOOP_PREFIX/share/hadoop/common/lib/(?!slf4j)[^.].*.jar,
+       $HADOOP_PREFIX/share/hadoop/hdfs/[^.].*.jar,
+       $HADOOP_PREFIX/share/hadoop/mapreduce/[^.].*.jar,
+       $HADOOP_PREFIX/share/hadoop/yarn/[^.].*.jar,
+@@ -123,7 +123,7 @@ ${mvnProjBaseDir}
+ 
+       <!-- Hadoop 1 requirements -->
+       $HADOOP_PREFIX/[^.].*.jar,
+-      $HADOOP_PREFIX/lib/[^.].*.jar,
++      $HADOOP_PREFIX/lib/(?!slf4j)[^.].*.jar,
+       <!-- End Hadoop 1 requirements -->
+ 
+     </value>
+diff --git a/pom.xml b/pom.xml
+index 43aa5fb..f69273b 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -123,6 +123,7 @@
+     <!-- overwritten in profiles hadoop-1 or hadoop-2 -->
+     <hadoop.version>2.2.0</hadoop.version>
+     <httpclient.version>3.1</httpclient.version>
++    <jetty.version>9.1.5.v20140505</jetty.version>
+     <!-- the maven-release-plugin makes this recommendation, due to plugin bugs -->
+     <maven.min-version>3.0.4</maven.min-version>
+     <!-- surefire/failsafe plugin option -->
+@@ -195,8 +196,8 @@
+       </dependency>
+       <dependency>
+         <groupId>javax.servlet</groupId>
+-        <artifactId>servlet-api</artifactId>
+-        <version>2.5</version>
++        <artifactId>javax.servlet-api</artifactId>
++        <version>3.1.0</version>
+       </dependency>
+       <dependency>
+         <groupId>javax.ws.rs</groupId>
+@@ -407,9 +408,34 @@
+         <version>3.1</version>
+       </dependency>
+       <dependency>
+-        <groupId>org.mortbay.jetty</groupId>
+-        <artifactId>jetty</artifactId>
+-        <version>6.1.26</version>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-http</artifactId>
++        <version>${jetty.version}</version>
++      </dependency>
++      <dependency>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-io</artifactId>
++        <version>${jetty.version}</version>
++      </dependency>
++      <dependency>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-security</artifactId>
++        <version>${jetty.version}</version>
++      </dependency>
++      <dependency>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-server</artifactId>
++        <version>${jetty.version}</version>
++      </dependency>
++      <dependency>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-servlet</artifactId>
++        <version>${jetty.version}</version>
++      </dependency>
++      <dependency>
++        <groupId>org.eclipse.jetty</groupId>
++        <artifactId>jetty-util</artifactId>
++        <version>${jetty.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>org.powermock</groupId>
+@@ -1098,7 +1124,7 @@
+       <properties>
+         <hadoop.version>1.2.1</hadoop.version>
+         <httpclient.version>3.0.1</httpclient.version>
+-        <slf4j.version>1.4.3</slf4j.version>
++        <slf4j.version>1.7.5</slf4j.version>
+       </properties>
+     </profile>
+     <!-- profile for building against Hadoop 2.x
+diff --git a/server/monitor/pom.xml b/server/monitor/pom.xml
+index ccc455e..dba7809 100644
+--- a/server/monitor/pom.xml
++++ b/server/monitor/pom.xml
+@@ -41,7 +41,7 @@
+     </dependency>
+     <dependency>
+       <groupId>javax.servlet</groupId>
+-      <artifactId>servlet-api</artifactId>
++      <artifactId>javax.servlet-api</artifactId>
+     </dependency>
+     <dependency>
+       <groupId>jline</groupId>
+@@ -80,22 +80,44 @@
+       <artifactId>zookeeper</artifactId>
+     </dependency>
+     <dependency>
+-      <groupId>org.mortbay.jetty</groupId>
+-      <artifactId>jetty</artifactId>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-security</artifactId>
+     </dependency>
+     <dependency>
+-      <groupId>junit</groupId>
+-      <artifactId>junit</artifactId>
+-      <scope>test</scope>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-server</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-servlet</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-util</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-http</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-io</artifactId>
++      <scope>runtime</scope>
+     </dependency>
+     <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-api</artifactId>
+-      <scope>test</scope>
++      <scope>runtime</scope>
+     </dependency>
+     <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-log4j12</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>junit</groupId>
++      <artifactId>junit</artifactId>
+       <scope>test</scope>
+     </dependency>
+   </dependencies>
+diff --git a/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java b/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
+index 1eeb04e..c76b4cf 100644
+--- a/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
++++ b/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
+@@ -19,60 +19,61 @@ package org.apache.accumulo.monitor;
+ import javax.servlet.http.HttpServlet;
+ 
+ import org.apache.accumulo.core.conf.Property;
+-import org.mortbay.jetty.Server;
+-import org.mortbay.jetty.bio.SocketConnector;
+-import org.mortbay.jetty.handler.ContextHandlerCollection;
+-import org.mortbay.jetty.security.SslSocketConnector;
+-import org.mortbay.jetty.servlet.Context;
+-import org.mortbay.jetty.servlet.SessionHandler;
++import org.eclipse.jetty.server.HttpConnectionFactory;
++import org.eclipse.jetty.server.Server;
++import org.eclipse.jetty.server.ServerConnector;
++import org.eclipse.jetty.server.session.SessionHandler;
++import org.eclipse.jetty.servlet.ServletContextHandler;
++import org.eclipse.jetty.util.ssl.SslContextFactory;
+ 
+ public class EmbeddedWebServer {
+   private static String EMPTY = "";
+-  
++
+   Server server = null;
+-  SocketConnector sock;
+-  ContextHandlerCollection handler;
+-  Context root;
++  ServerConnector connector = null;
++  ServletContextHandler handler;
+   boolean usingSsl;
+-  
++
+   public EmbeddedWebServer() {
+     this("0.0.0.0", 0);
+   }
+-  
++
+   public EmbeddedWebServer(String host, int port) {
+     server = new Server();
+-    handler = new ContextHandlerCollection();
+-    root = new Context(handler, "/", new SessionHandler(), null, null, null);
+-    
+     if (EMPTY.equals(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTORE))
+         || EMPTY.equals(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTOREPASS))
+-        || EMPTY.equals(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTORE))
+-        || EMPTY.equals(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTOREPASS))) {
+-      sock = new SocketConnector();
++        || EMPTY.equals(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTORE)) || EMPTY.equals(Monitor.getSystemConfiguration().get(
++Property.MONITOR_SSL_TRUSTSTOREPASS))) {
++      connector = new ServerConnector(server, new HttpConnectionFactory());
+       usingSsl = false;
+     } else {
+-      sock = new SslSocketConnector();
+-      ((SslSocketConnector) sock).setKeystore(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTORE));
+-      ((SslSocketConnector) sock).setKeyPassword(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTOREPASS));
+-      ((SslSocketConnector) sock).setTruststore(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTORE));
+-      ((SslSocketConnector) sock).setTrustPassword(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTOREPASS));
++      SslContextFactory sslContextFactory = new SslContextFactory();
++      sslContextFactory.setKeyStorePath(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTORE));
++      sslContextFactory.setKeyStorePassword(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_KEYSTOREPASS));
++      sslContextFactory.setTrustStorePath(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTORE));
++      sslContextFactory.setTrustStorePassword(Monitor.getSystemConfiguration().get(Property.MONITOR_SSL_TRUSTSTOREPASS));
++
++      connector = new ServerConnector(server, sslContextFactory);
+       usingSsl = true;
+     }
+-    sock.setHost(host);
+-    sock.setPort(port);
++
++    connector.setHost(host);
++    connector.setPort(port);
++
++    handler = new ServletContextHandler(server, "/", new SessionHandler(), null, null, null);
+   }
+-  
++
+   public void addServlet(Class<? extends HttpServlet> klass, String where) {
+-    root.addServlet(klass, where);
++    handler.addServlet(klass, where);
+   }
+-  
++
+   public int getPort() {
+-    return sock.getLocalPort();
++    return connector.getLocalPort();
+   }
+-  
++
+   public void start() {
+     try {
+-      server.addConnector(sock);
++      server.addConnector(connector);
+       server.setHandler(handler);
+       server.start();
+     } catch (Exception e) {
+@@ -80,7 +81,7 @@ public class EmbeddedWebServer {
+       throw new RuntimeException(e);
+     }
+   }
+-  
++
+   public void stop() {
+     try {
+       server.stop();
+@@ -88,7 +89,7 @@ public class EmbeddedWebServer {
+       throw new RuntimeException(e);
+     }
+   }
+-  
++
+   public boolean isUsingSsl() {
+     return usingSsl;
+   }
+diff --git a/start/pom.xml b/start/pom.xml
+index ee288a3..6a37f36 100644
+--- a/start/pom.xml
++++ b/start/pom.xml
+@@ -71,8 +71,8 @@
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+-      <groupId>org.mortbay.jetty</groupId>
+-      <artifactId>jetty</artifactId>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-server</artifactId>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+diff --git a/test/pom.xml b/test/pom.xml
+index 5d12ba6..01e4aaa 100644
+--- a/test/pom.xml
++++ b/test/pom.xml
+@@ -166,8 +166,8 @@
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+-      <groupId>org.mortbay.jetty</groupId>
+-      <artifactId>jetty</artifactId>
++      <groupId>org.eclipse.jetty</groupId>
++      <artifactId>jetty-server</artifactId>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+-- 
+1.8.3.1
+

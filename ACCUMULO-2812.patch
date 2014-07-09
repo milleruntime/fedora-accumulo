@@ -1,0 +1,60 @@
+From a1c0ef575bade8c1bf55a57bed0088dc038624f5 Mon Sep 17 00:00:00 2001
+From: Christopher Tubbs <ctubbsii@apache.org>
+Date: Thu, 15 May 2014 16:01:07 -0400
+Subject: [PATCH] ACCUMULO-2812 Pass options to compiler for native lib
+
+  Use system default architecture options when compiling, instead of forcing
+  -m64. Allow passing additional arguments (USERFLAGS) to specify additional
+  compiler options. Set USERFLAGS with the build_native_library.sh's
+  command-line arguments.
+---
+ bin/build_native_library.sh               | 1 +
+ server/native/src/main/resources/Makefile | 7 ++++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/bin/build_native_library.sh b/bin/build_native_library.sh
+index 65b2457..907ce2c 100755
+--- a/bin/build_native_library.sh
++++ b/bin/build_native_library.sh
+@@ -56,6 +56,7 @@ native_dir=`find "${TMP_DIR}" -maxdepth 1 -mindepth 1 -type d`
+ cd "${native_dir}"
+ 
+ # Make the native library
++export USERFLAGS=$@
+ make
+ 
+ # Make sure it didn't fail
+diff --git a/server/native/src/main/resources/Makefile b/server/native/src/main/resources/Makefile
+index 33c2fe9..b9211aa 100644
+--- a/server/native/src/main/resources/Makefile
++++ b/server/native/src/main/resources/Makefile
+@@ -18,14 +18,15 @@ HDRS=$(wildcard nativeMap/*.h) $(wildcard javah/*.h)
+ TESTSRCS=$(wildcard testNativeMap/*.cc)
+ CXX=g++
+ MAVERICKFLAGS=
++USERFLAGS=$(shell env | grep "^USERFLAGS=" | cut -d= -f2)
+ 
+ ifeq ($(shell uname),Linux)
+-	JAVA_HOME=$(shell env | fgrep JAVA_HOME | cut -d= -f2)
++	JAVA_HOME=$(shell env | grep "^JAVA_HOME=" | cut -d= -f2)
+ 	ifeq ($(strip $(JAVA_HOME)),)
+ 		JAVA_HOME=$(shell dirname $$(dirname $$(readlink -ef $$(which javah))))
+ 	endif
+ 	NATIVE_LIB := libaccumulo.so
+-	CXXFLAGS=-m64 -g -fPIC -shared -O3 -Wall -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -Ijavah
++	CXXFLAGS=-g -fPIC -shared -O3 -Wall -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -Ijavah $(USERFLAGS)
+ endif
+ 
+ ifeq ($(shell uname),Darwin)
+@@ -34,7 +35,7 @@ ifeq ($(shell uname),Darwin)
+ ifneq (,$(findstring 10.9,$(shell sw_vers -productVersion)))
+ 	MAVERICKFLAGS=-stdlib=libstdc++
+ endif
+-	CXXFLAGS=-m64 -dynamiclib -undefined dynamic_lookup -O3 -I/System/Library/Frameworks/JavaVM.framework/Headers -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/darwin -Ijavah $(MAVERICK_FLAGS)
++	CXXFLAGS=-dynamiclib -undefined dynamic_lookup -O3 -I/System/Library/Frameworks/JavaVM.framework/Headers -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/darwin -Ijavah $(USERFLAGS) $(MAVERICK_FLAGS)
+ endif
+ 
+ all : $(NATIVE_LIB)
+-- 
+1.8.3.1
+
