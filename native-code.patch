@@ -20,7 +20,7 @@ index b9211aa..0e93467 100644
  	endif
  	NATIVE_LIB := libaccumulo.so
 -	CXXFLAGS=-g -fPIC -shared -O3 -Wall -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -Ijavah $(USERFLAGS)
-+	CXXFLAGS=$(RPM_OPT_FLAGS) $(RPM_LD_FLAGS) -fPIC -shared -fno-strict-aliasing -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -Ijavah $(USERFLAGS)
++	CXXFLAGS=$(RPM_OPT_FLAGS) $(RPM_LD_FLAGS) -fPIC -shared -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -Ijavah $(USERFLAGS)
  endif
  
  ifeq ($(shell uname),Darwin)

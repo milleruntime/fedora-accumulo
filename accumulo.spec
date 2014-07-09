@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  1%{?dist}
+Release:  2%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -408,7 +408,9 @@ install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %doc NOTICE
 %dir %{_javadir}/%{name}
 %dir %{_libexecdir}/%{name}
+%if 0%{?fedora} > 20
 %dir %{_mavenpomdir}/%{name}
+%endif
 %{_libexecdir}/%{name}/%{name}
 %{_libexecdir}/%{name}/config.sh
 %{_bindir}/%{name}
@@ -523,5 +525,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Jul  9 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-2
+- Add conditional for pom directory to build for f20
+- Remove fno-strict-aliasing flag based on upstream ACCUMULO-2762
+
 * Wed Apr 30 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-1
 - Initial packaging
