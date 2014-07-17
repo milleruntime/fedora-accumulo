@@ -1,0 +1,145 @@
+diff --git a/conf/templates/accumulo-env.sh b/conf/templates/accumulo-env.sh
+index e136a3f..c1b0b72 100644
+--- a/conf/templates/accumulo-env.sh
++++ b/conf/templates/accumulo-env.sh
+@@ -15,34 +15,8 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-###
+-### Configure these environment variables to point to your local installations.
+-###
+-### The functional tests require conditional values, so keep this style:
+-###
+-### test -z "$JAVA_HOME" && export JAVA_HOME=/usr/lib/jvm/java
+-###
+-###
+-### Note that the -Xmx -Xms settings below require substantial free memory:
+-### you may want to use smaller values, especially when running everything
+-### on a single machine.
+-###
+-if [ -z "$HADOOP_HOME" ]
+-then
+-   test -z "$HADOOP_PREFIX"      && export HADOOP_PREFIX=/path/to/hadoop
+-else
+-   HADOOP_PREFIX="$HADOOP_HOME"
+-   unset HADOOP_HOME
+-fi
+-
+-# hadoop-1.2:
+-# test -z "$HADOOP_CONF_DIR"       && export HADOOP_CONF_DIR="$HADOOP_PREFIX/conf"
+-# hadoop-2.0:
+-test -z "$HADOOP_CONF_DIR"     && export HADOOP_CONF_DIR="$HADOOP_PREFIX/etc/hadoop"
+-
+-test -z "$JAVA_HOME"             && export JAVA_HOME=/path/to/java
+-test -z "$ZOOKEEPER_HOME"        && export ZOOKEEPER_HOME=/path/to/zookeeper
+-test -z "$ACCUMULO_LOG_DIR"      && export ACCUMULO_LOG_DIR=$ACCUMULO_HOME/logs
++test -z "$ACCUMULO_CONF_DIR"     && export ACCUMULO_CONF_DIR=/etc/accumulo
++test -z "$ACCUMULO_LOG_DIR"      && export ACCUMULO_LOG_DIR=/var/log/accumulo
+ if [ -f ${ACCUMULO_CONF_DIR}/accumulo.policy ]
+ then
+    POLICY="-Djava.security.manager -Djava.security.policy=${ACCUMULO_CONF_DIR}/accumulo.policy"
+@@ -56,11 +30,5 @@ test -z "$ACCUMULO_OTHER_OPTS"   && export ACCUMULO_OTHER_OPTS="${otherHigh_othe
+ # what do when the JVM runs out of heap memory
+ export ACCUMULO_KILL_CMD='kill -9 %p'
+ 
+-### Optionally look for hadoop and accumulo native libraries for your
+-### platform in additional directories. (Use DYLD_LIBRARY_PATH on Mac OS X.)
+-### May not be necessary for Hadoop 2.x or using an RPM that installs to
+-### the correct system library directory.
+-# export LD_LIBRARY_PATH=${HADOOP_PREFIX}/lib/native/${PLATFORM}:${LD_LIBRARY_PATH}
+-
+ # Should the monitor bind to all network interfaces -- default: false
+ # export ACCUMULO_MONITOR_BIND_ALL="true"
+diff --git a/conf/templates/accumulo-metrics.xml b/conf/templates/accumulo-metrics.xml
+index 60f9f8d..f30b098 100644
+--- a/conf/templates/accumulo-metrics.xml
++++ b/conf/templates/accumulo-metrics.xml
+@@ -23,7 +23,7 @@
+    Metrics log directory
+ -->
+   <logging>
+-    <dir>${ACCUMULO_HOME}/metrics</dir>
++    <dir>/var/log/accumulo/metrics</dir>
+   </logging>
+ <!--
+  Enable/Disable metrics accumulation on the different servers and their components
+diff --git a/conf/templates/accumulo-site.xml b/conf/templates/accumulo-site.xml
+index 052ed7e..7d90774 100644
+--- a/conf/templates/accumulo-site.xml
++++ b/conf/templates/accumulo-site.xml
+@@ -22,6 +22,12 @@
+     you are simply testing at your workstation, you will most definitely need to change the three entries below. -->
+ 
+   <property>
++    <name>instance.volumes</name>
++    <value>file:///tmp/accumulo</value>
++    <description>comma separated list of dfs URIs</description>
++  </property>
++
++  <property>
+     <name>instance.zookeeper.host</name>
+     <value>localhost:2181</value>
+     <description>comma separated list of zookeeper servers</description>
+@@ -28,15 +28,6 @@
+   </property>
+ 
+   <property>
+-    <name>logger.dir.walog</name>
+-    <value>walogs</value>
+-    <description>The property only needs to be set if upgrading from 1.4 which used to store write-ahead logs on the local
+-      filesystem. In 1.5 write-ahead logs are stored in DFS.  When 1.5 is started for the first time it will copy any 1.4
+-      write ahead logs into DFS.  It is possible to specify a comma-separated list of directories.
+-    </description>
+-  </property>
+-
+-  <property>
+     <name>instance.secret</name>
+     <value>DEFAULT</value>
+     <description>A secret unique to a given instance that all servers must know in order to communicate with one another.
+@@ -89,44 +80,7 @@
+ ${mvnProjBaseDir}
+   <property>
+     <name>general.classpaths</name>
+-
+-    <value>
+-      <!-- Accumulo requirements -->
+-      $ACCUMULO_HOME/lib/accumulo-server.jar,
+-      $ACCUMULO_HOME/lib/accumulo-core.jar,
+-      $ACCUMULO_HOME/lib/accumulo-start.jar,
+-      $ACCUMULO_HOME/lib/accumulo-fate.jar,
+-      $ACCUMULO_HOME/lib/accumulo-proxy.jar,
+-      $ACCUMULO_HOME/lib/[^.].*.jar,
+-      <!-- End Accumulo requirements -->
+-
+-      <!-- ZooKeeper requirements -->
+-      $ZOOKEEPER_HOME/zookeeper[^.].*.jar,
+-      <!-- End ZooKeeper requirements -->
+-
+-      <!-- Common Hadoop requirements -->
+-      $HADOOP_CONF_DIR,
+-      <!-- End Common Hadoop requirements -->
+-
+-      <!-- Hadoop 2 requirements -->
+-      $HADOOP_PREFIX/share/hadoop/common/[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/common/lib/(?!slf4j)[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/hdfs/[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/mapreduce/[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/yarn/[^.].*.jar,
+-      /usr/lib/hadoop/[^.].*.jar,
+-      /usr/lib/hadoop/lib/[^.].*.jar,
+-      /usr/lib/hadoop-hdfs/[^.].*.jar,
+-      /usr/lib/hadoop-mapreduce/[^.].*.jar,
+-      /usr/lib/hadoop-yarn/[^.].*.jar,
+-      <!-- End Hadoop 2 requirements -->
+-
+-      <!-- Hadoop 1 requirements -->
+-      $HADOOP_PREFIX/[^.].*.jar,
+-      $HADOOP_PREFIX/lib/(?!slf4j)[^.].*.jar,
+-      <!-- End Hadoop 1 requirements -->
+-
+-    </value>
++    <value> </value>
+     <description>Classpaths that accumulo checks for updates and class files.</description>
+   </property>
+ </configuration>

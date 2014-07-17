@@ -9,20 +9,22 @@
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  2%{?dist}
+Release:  3%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
 URL:      http://%{name}.apache.org
 Source0:  https://github.com/apache/%{name}/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 
+# startup script
+Source1:  %{name}
 # systemd service files
-Source1:  %{name}-master.service
-Source2:  %{name}-tserver.service
-Source3:  %{name}-gc.service
-Source4:  %{name}-tracer.service
+Source2:  %{name}-master.service
+Source3:  %{name}-tserver.service
+Source4:  %{name}-gc.service
+Source5:  %{name}-tracer.service
 %if %{include_monitor}
-Source5:  %{name}-monitor.service
+Source6:  %{name}-monitor.service
 %endif
 
 # Upstream patches needed for Fedora
@@ -38,6 +40,7 @@ Patch6: commons-configuration.patch
 Patch7: commons-math.patch
 Patch8: native-code.patch
 Patch9: disabled-tests.patch
+Patch10: default-conf.patch
 
 # Accumulo depends on Hadoop, and Hadoop is not built for ARM
 ExcludeArch: %{arm}
@@ -293,6 +296,7 @@ This package contains the API documentation for %{longproj}.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 # Update dependency versions
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='jline']/pom:version" "2.10"
@@ -362,20 +366,13 @@ install -d -m 755 %{buildroot}%{_var}/cache/%{name}
 cp -af server/native/target/%{name}-native-%{version}/%{name}-native-%{version}/lib%{name}.so %{buildroot}%{_libdir}/%{name}
 
 # upstream scripts and config
-install -d -m 755 %{buildroot}%{_libexecdir}/%{name}
-cp -af bin/%{name} bin/config.sh %{buildroot}%{_libexecdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
 for x in gc masters monitor slaves tracers; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
 
 # service shortcut files
 install -d -m 755 %{buildroot}%{_bindir}
-cat <<EOF >"%{name}"
-#! /usr/bin/bash
-[[ \$ACCUMULO_CONF_DIR ]] || export ACCUMULO_CONF_DIR=/%{_sysconfdir}/%{name}
-%{_libexecdir}/%{name}/%{name} \$@
-EOF
-install -p -m 755 %{name} %{buildroot}%{_bindir}
+install -p -m 755 %{SOURCE1} %{buildroot}%{_bindir}
 
 %if %{include_monitor}
 for service in master tserver shell init admin gc monitor tracer classpath version rfile-info login-info zookeeper create-token info jar; do
@@ -391,12 +388,12 @@ done
 
 # systemd services
 install -d -m 755 %{buildroot}%{_unitdir}
-install -p -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/%{name}-master.service
-install -p -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/%{name}-tserver.service
-install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/%{name}-gc.service
-install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/%{name}-tracer.service
+install -p -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/%{name}-master.service
+install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/%{name}-tserver.service
+install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/%{name}-gc.service
+install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-tracer.service
 %if %{include_monitor}
-install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
+install -p -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %endif
 
 %files
@@ -407,12 +404,9 @@ install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %doc README
 %doc NOTICE
 %dir %{_javadir}/%{name}
-%dir %{_libexecdir}/%{name}
 %if 0%{?fedora} > 20
 %dir %{_mavenpomdir}/%{name}
 %endif
-%{_libexecdir}/%{name}/%{name}
-%{_libexecdir}/%{name}/config.sh
 %{_bindir}/%{name}
 %{_bindir}/%{name}-shell
 %{_bindir}/%{name}-classpath
@@ -443,7 +437,9 @@ install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %{_unitdir}/%{name}-master.service
 
 %files tserver -f .mfiles-tserver
+%if 0%{?fedora} > 20
 %dir %{_jnidir}/%{name}
+%endif
 %{_bindir}/%{name}-tserver
 %{_unitdir}/%{name}-tserver.service
 
@@ -504,7 +500,7 @@ install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %endif
 
 %pre core
-getent group %{name} >/dev/null || groupadd -r %{name}
+getent group %{name} >/dev/null || /usr/sbin/groupadd -r %{name}
 getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --shell /sbin/nologin -M -r -g %{name} --home %{_var}/cache/%{name} %{name}
 
 %post master
@@ -525,6 +521,10 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Jul 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-3
+- Fix broken service launch scripts
+- Add conditional for lib directory to build for f20
+
 * Wed Jul  9 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-2
 - Add conditional for pom directory to build for f20
 - Remove fno-strict-aliasing flag based on upstream ACCUMULO-2762
