@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  3%{?dist}
+Release:  4%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -521,6 +521,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Fri Aug 15 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
 * Wed Jul 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-3
 - Fix broken service launch scripts
 - Add conditional for lib directory to build for f20
