@@ -1,65 +1,13 @@
-diff --git a/conf/templates/accumulo-env.sh b/conf/templates/accumulo-env.sh
-index e136a3f..c1b0b72 100644
---- a/conf/templates/accumulo-env.sh
-+++ b/conf/templates/accumulo-env.sh
-@@ -15,34 +15,8 @@
- # See the License for the specific language governing permissions and
- # limitations under the License.
- 
--###
--### Configure these environment variables to point to your local installations.
--###
--### The functional tests require conditional values, so keep this style:
--###
--### test -z "$JAVA_HOME" && export JAVA_HOME=/usr/lib/jvm/java
--###
--###
--### Note that the -Xmx -Xms settings below require substantial free memory:
--### you may want to use smaller values, especially when running everything
--### on a single machine.
--###
--if [ -z "$HADOOP_HOME" ]
--then
--   test -z "$HADOOP_PREFIX"      && export HADOOP_PREFIX=/path/to/hadoop
--else
--   HADOOP_PREFIX="$HADOOP_HOME"
--   unset HADOOP_HOME
--fi
--
--# hadoop-1.2:
--# test -z "$HADOOP_CONF_DIR"       && export HADOOP_CONF_DIR="$HADOOP_PREFIX/conf"
--# hadoop-2.0:
--test -z "$HADOOP_CONF_DIR"     && export HADOOP_CONF_DIR="$HADOOP_PREFIX/etc/hadoop"
--
--test -z "$JAVA_HOME"             && export JAVA_HOME=/path/to/java
--test -z "$ZOOKEEPER_HOME"        && export ZOOKEEPER_HOME=/path/to/zookeeper
--test -z "$ACCUMULO_LOG_DIR"      && export ACCUMULO_LOG_DIR=$ACCUMULO_HOME/logs
-+test -z "$ACCUMULO_CONF_DIR"     && export ACCUMULO_CONF_DIR=/etc/accumulo
-+test -z "$ACCUMULO_LOG_DIR"      && export ACCUMULO_LOG_DIR=/var/log/accumulo
- if [ -f ${ACCUMULO_CONF_DIR}/accumulo.policy ]
- then
-    POLICY="-Djava.security.manager -Djava.security.policy=${ACCUMULO_CONF_DIR}/accumulo.policy"
-@@ -56,11 +30,5 @@ test -z "$ACCUMULO_OTHER_OPTS"   && export ACCUMULO_OTHER_OPTS="${otherHigh_othe
- # what do when the JVM runs out of heap memory
- export ACCUMULO_KILL_CMD='kill -9 %p'
- 
--### Optionally look for hadoop and accumulo native libraries for your
--### platform in additional directories. (Use DYLD_LIBRARY_PATH on Mac OS X.)
--### May not be necessary for Hadoop 2.x or using an RPM that installs to
--### the correct system library directory.
--# export LD_LIBRARY_PATH=${HADOOP_PREFIX}/lib/native/${PLATFORM}:${LD_LIBRARY_PATH}
--
- # Should the monitor bind to all network interfaces -- default: false
- # export ACCUMULO_MONITOR_BIND_ALL="true"
 diff --git a/conf/templates/accumulo-metrics.xml b/conf/templates/accumulo-metrics.xml
 index 60f9f8d..f30b098 100644
 --- a/conf/templates/accumulo-metrics.xml
 +++ b/conf/templates/accumulo-metrics.xml
-@@ -23,7 +23,7 @@
+@@ -23,7 +23,8 @@
     Metrics log directory
  -->
    <logging>
 -    <dir>${ACCUMULO_HOME}/metrics</dir>
++    <!-- This is just an example location; select something appropriate for you -->
 +    <dir>/var/log/accumulo/metrics</dir>
    </logging>
  <!--
@@ -97,7 +45,7 @@ index 052ed7e..7d90774 100644
      <name>instance.secret</name>
      <value>DEFAULT</value>
      <description>A secret unique to a given instance that all servers must know in order to communicate with one another.
-@@ -89,44 +80,7 @@
+@@ -89,44 +80,13 @@
  ${mvnProjBaseDir}
    <property>
      <name>general.classpaths</name>
@@ -139,7 +87,13 @@ index 052ed7e..7d90774 100644
 -      <!-- End Hadoop 1 requirements -->
 -
 -    </value>
-+    <value> </value>
++    <value>/etc/accumulo/lib</value>
      <description>Classpaths that accumulo checks for updates and class files.</description>
    </property>
++
++  <property>
++    <name>general.dynamic.classpaths</name>
++    <value>/etc/accumulo/lib/ext</value>
++    <description>Classpaths that accumulo checks for updates and class files to dynamically load.</description>
++  </property>
  </configuration>

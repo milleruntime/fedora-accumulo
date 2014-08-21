@@ -1,31 +1,38 @@
 %global _hardened_build 1
 %global proj accumulo
 %global longproj Apache Accumulo
-# monitor not included until dependent javascript libs are packaged
+# TODO monitor not included until dependent javascript libs are packaged
 %global include_monitor 0
+
+# control javadocs (javadocs are optional; see FESCo #1263)
+%global include_javadocs 0
+
+# jpackage main class
+%global main_class org.apache.%{name}.start.Main
 
 %global commit 06162580e885f11863d1a6d22f952bce35b78b68
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  4%{?dist}
+Release:  5%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
 URL:      http://%{name}.apache.org
 Source0:  https://github.com/apache/%{name}/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 
-# startup script
-Source1:  %{name}
 # systemd service files
-Source2:  %{name}-master.service
-Source3:  %{name}-tserver.service
-Source4:  %{name}-gc.service
-Source5:  %{name}-tracer.service
+Source1:  %{name}-master.service
+Source2:  %{name}-tserver.service
+Source3:  %{name}-gc.service
+Source4:  %{name}-tracer.service
 %if %{include_monitor}
-Source6:  %{name}-monitor.service
+Source5:  %{name}-monitor.service
 %endif
+
+# Java configuration file for Fedora
+Source6: %{name}.conf
 
 # Upstream patches needed for Fedora
 Patch0: ACCUMULO-1691.patch
@@ -36,13 +43,18 @@ Patch4: ACCUMULO-2812.patch
 Patch5: ACCUMULO-2808.patch
 
 # Should be applied after upstream patches
+# Use current version of commons-configuration
 Patch6: commons-configuration.patch
+# Use current version of commons-math
 Patch7: commons-math.patch
+# Apply Fedora JNI conventions
 Patch8: native-code.patch
+# Disable broken tests
 Patch9: disabled-tests.patch
+# Patch upstream-provided example configuration for Fedora
 Patch10: default-conf.patch
 
-# Accumulo depends on Hadoop, and Hadoop is not built for ARM
+# This depends on Hadoop, and Hadoop is not built for ARM
 ExcludeArch: %{arm}
 
 BuildRequires: apache-commons-cli
@@ -109,6 +121,11 @@ License: ASL 2.0 and BSD
 Group: Applications/System
 BuildArch: noarch
 Requires(pre): /usr/sbin/useradd
+%if !%{include_javadocs}
+%if 0%{?fedora} > 20
+Obsoletes: %{name}-javadoc < 1.6.0-5%{?dist}
+%endif
+%endif
 
 %description core
   %{longproj} is a sorted, distributed key/value store based on Google's
@@ -269,6 +286,7 @@ modify key/value pairs at various points in the data management process.
 
 This package provides native code for %{longproj}'s TServer.
 
+%if %{include_javadocs}
 %package javadoc
 Summary: Javadoc for %{longproj}
 License:  ASL 2.0
@@ -283,6 +301,7 @@ cell-level access labels and a server-side programming mechanism that can
 modify key/value pairs at various points in the data management process.
 
 This package contains the API documentation for %{longproj}.
+%endif
 
 %prep
 %setup -qn %{name}-%{commit}
@@ -308,13 +327,15 @@ This package contains the API documentation for %{longproj}.
 %pom_xpath_set "pom:project/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3" core
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='bcprov-jdk15on']/pom:artifactId" "bcprov-jdk16"
 
-# Fix javadoc
+%if %{include_javadocs}
+# Remove custom javadoc directory so xmvn javadoc magic works
 %pom_xpath_remove "pom:project/pom:build/pom:pluginManagement/pom:plugins/pom:plugin[pom:artifactId='maven-javadoc-plugin']/pom:configuration/pom:reportOutputDirectory"
+%endif
 
-# No need to deploy site with ssh
+# Remove unused extension; no need to deploy site with ssh
 %pom_xpath_remove "pom:project/pom:build/pom:extensions/pom:extension[pom:artifactId='wagon-ssh']"
 
-# Disable unneeded modules
+# Disable unneeded/unused modules
 %pom_disable_module test
 %pom_disable_module proxy
 %pom_disable_module maven-plugin
@@ -346,6 +367,7 @@ This package contains the API documentation for %{longproj}.
 %mvn_package ":%{name}-tracer" tracer
 %mvn_package ":%{name}-tserver" tserver
 
+# build native, but skip install; JNI *.so is copied manually
 %mvn_package ":%{name}-native" __noinstall
 
 %build
@@ -363,17 +385,44 @@ This package contains the API documentation for %{longproj}.
 # native libs
 install -d -m 755 %{buildroot}%{_libdir}/%{name}
 install -d -m 755 %{buildroot}%{_var}/cache/%{name}
-cp -af server/native/target/%{name}-native-%{version}/%{name}-native-%{version}/lib%{name}.so %{buildroot}%{_libdir}/%{name}
+install -p -m 644 server/native/target/%{name}-native-%{version}/%{name}-native-%{version}/lib%{name}.so %{buildroot}%{_libdir}/%{name}
 
-# upstream scripts and config
+# generate default config for Fedora from upstream examples
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib
+install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib/ext
 bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
-for x in gc masters monitor slaves tracers; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
+for x in gc masters monitor slaves tracers %{name}-env.sh; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
 
-# service shortcut files
-install -d -m 755 %{buildroot}%{_bindir}
-install -p -m 755 %{SOURCE1} %{buildroot}%{_bindir}
+# main launcher
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
+# fixup the generated jpackage script
+sed -i -e 's/^#!\/bin\/sh$/#!\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
+# ensure the java configuration options know which service is being called
+sed -i -e 's/^\s*\.\s\s*\/etc\/java\/'%{name}'\.conf/& \$1/' %{buildroot}%{_bindir}/%{name}
+sed -i -e 's/^\s*\.\s\s*\$HOME\/\.'%{name}'rc$/& \$1/' %{buildroot}%{_bindir}/%{name}
+# options may have spaces in them, so replace run with an exec that properly
+# parses arguments as arrays.
+sed -i -e '/^run .*$/d' %{buildroot}%{_bindir}/%{name}
+sed -i -e '/^set_flags .*$/d' %{buildroot}%{_bindir}/%{name}
+sed -i -e '/^set_options .*$/d' %{buildroot}%{_bindir}/%{name}
+cat <<EOF >>%{buildroot}%{_bindir}/%{name}
+set_javacmd
 
+if [ -n "\${VERBOSE}" ]; then
+  echo "Java virtual machine used: \${JAVACMD}"
+  echo "classpath used: \${CLASSPATH}"
+  echo "main class used: \${MAIN_CLASS}"
+  echo "flags used: \${FLAGS[@]}"
+  echo "options used: \${ACCUMULO_OPTS[@]}"
+  echo "arguments used: \${@}"
+fi
+
+exec "\${JAVACMD}" "\${FLAGS[@]}" -classpath "\${CLASSPATH}" \\
+  "\${ACCUMULO_OPTS[@]}" "\${MAIN_CLASS}" "\${@}"
+EOF
+
+# scripts for services/utilities
 %if %{include_monitor}
 for service in master tserver shell init admin gc monitor tracer classpath version rfile-info login-info zookeeper create-token info jar; do
 %else
@@ -381,20 +430,24 @@ for service in master tserver shell init admin gc tracer classpath version rfile
 %endif
   cat <<EOF >"%{name}-$service"
 #! /usr/bin/bash
-%{_bindir}/%{name} $service
+%{_bindir}/%{name} $service "\$@"
 EOF
   install -p -m 755 %{name}-$service %{buildroot}%{_bindir}
 done
 
 # systemd services
 install -d -m 755 %{buildroot}%{_unitdir}
-install -p -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/%{name}-master.service
-install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/%{name}-tserver.service
-install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/%{name}-gc.service
-install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-tracer.service
+install -p -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/%{name}-master.service
+install -p -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/%{name}-tserver.service
+install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/%{name}-gc.service
+install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/%{name}-tracer.service
 %if %{include_monitor}
-install -p -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{name}-monitor.service
+install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %endif
+
+# java configuration file for Fedora
+install -d -m 755 %{buildroot}%{_javaconfdir}
+install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 
 %files
 
@@ -418,14 +471,16 @@ install -p -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{name}-monitor.service
 %{_bindir}/%{name}-info
 %{_bindir}/%{name}-jar
 %attr(0750, %{name}, -) %dir %{_var}/cache/%{name}
-%attr(0750, %{name}, -) %dir %{_sysconfdir}/%{name}
-%attr(0750, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/accumulo-env.sh
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/accumulo-metrics.xml
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/accumulo.policy.example
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/accumulo-site.xml
+%attr(0755, %{name}, -) %dir %{_sysconfdir}/%{name}
+%attr(0755, %{name}, -) %dir %{_sysconfdir}/%{name}/lib
+%attr(0755, %{name}, -) %dir %{_sysconfdir}/%{name}/lib/ext
+%attr(0755, %{name}, -) %config(noreplace) %{_javaconfdir}/%{name}.conf
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-metrics.xml
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}.policy.example
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-site.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/auditLog.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.xml
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/log4j.properties
+%attr(0644, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/log4j.properties
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.xml
 
 %files server-base -f .mfiles-server-base
@@ -459,7 +514,9 @@ install -p -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{name}-monitor.service
 
 %files examples -f .mfiles-examples
 
+%if %{include_javadocs}
 %files javadoc -f .mfiles-javadoc
+%endif
 
 %files native
 %dir %{_libdir}/%{name}
@@ -521,6 +578,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Aug 20 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-5
+- Use jpackage_script macro, standard java env, and working example config
+
 * Fri Aug 15 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6.0-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
