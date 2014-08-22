@@ -15,7 +15,7 @@
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  5%{?dist}
+Release:  6%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -377,7 +377,11 @@ This package contains the API documentation for %{longproj}.
 # especially in the start jar. These should be enabled when possible.
 # ITs are skipped, because they time out frequently and take too many resources
 # to run reliably. Failures do not reliably indicate meaningful issues.
+%if %{include_javadocs}
 %mvn_build -- -DforkCount=1C -DskipTests -DskipITs
+%else
+%mvn_build -j -- -DforkCount=1C -DskipTests -DskipITs
+%endif
 
 %install
 %mvn_install
@@ -578,6 +582,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Aug 21 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-6
+- Skip javadoc generation in mvn_build when not used
+
 * Wed Aug 20 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-5
 - Use jpackage_script macro, standard java env, and working example config
 
