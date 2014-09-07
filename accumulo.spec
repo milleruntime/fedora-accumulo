@@ -15,7 +15,7 @@
 
 Name:     %{proj}
 Version:  1.6.0
-Release:  6%{?dist}
+Release:  7%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -389,7 +389,7 @@ This package contains the API documentation for %{longproj}.
 # native libs
 install -d -m 755 %{buildroot}%{_libdir}/%{name}
 install -d -m 755 %{buildroot}%{_var}/cache/%{name}
-install -p -m 644 server/native/target/%{name}-native-%{version}/%{name}-native-%{version}/lib%{name}.so %{buildroot}%{_libdir}/%{name}
+install -p -m 755 server/native/target/%{name}-native-%{version}/%{name}-native-%{version}/lib%{name}.so %{buildroot}%{_libdir}/%{name}
 
 # generate default config for Fedora from upstream examples
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
@@ -582,6 +582,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Sun Sep  7 2014 Ville Skyttä <ville.skytta@iki.fi> - 1.6.0-7
+- Fix -debuginfo
+
 * Thu Aug 21 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.0-6
 - Skip javadoc generation in mvn_build when not used
 
