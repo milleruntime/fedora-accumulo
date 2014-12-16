@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.1
-Release:  1%{?dist}
+Release:  2%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -572,6 +572,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Tue Dec 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.1-2
+- Remove mortbay Jetty deps
+
 * Tue Dec 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.1-1
 - Update to 1.6.1
 
