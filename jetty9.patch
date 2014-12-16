@@ -1,0 +1,139 @@
+diff --git a/assemble/pom.xml b/assemble/pom.xml
+index 6c88765..c0cbe22 100644
+--- a/assemble/pom.xml
++++ b/assemble/pom.xml
+@@ -126,10 +126,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.eclipse.jetty</groupId>
+-      <artifactId>jetty-continuation</artifactId>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.eclipse.jetty</groupId>
+       <artifactId>jetty-http</artifactId>
+     </dependency>
+     <dependency>
+diff --git a/assemble/src/main/assemblies/component.xml b/assemble/src/main/assemblies/component.xml
+index a8f7716..a52980b 100644
+--- a/assemble/src/main/assemblies/component.xml
++++ b/assemble/src/main/assemblies/component.xml
+@@ -35,7 +35,6 @@
+         <include>org.apache.commons:commons-math</include>
+         <include>org.apache.commons:commons-vfs2</include>
+         <include>org.apache.thrift:libthrift</include>
+-        <include>org.eclipse.jetty:jetty-continuation</include>
+         <include>org.eclipse.jetty:jetty-http</include>
+         <include>org.eclipse.jetty:jetty-io</include>
+         <include>org.eclipse.jetty:jetty-security</include>
+diff --git a/pom.xml b/pom.xml
+index b0f9298..a6e0e16 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -123,7 +123,7 @@
+     <!-- overwritten in profiles hadoop-1 or hadoop-2 -->
+     <hadoop.version>2.2.0</hadoop.version>
+     <httpclient.version>3.1</httpclient.version>
+-    <jetty.version>8.1.15.v20140411</jetty.version>
++    <jetty.version>9.1.5.v20140505</jetty.version>
+     <!-- the maven-release-plugin makes this recommendation, due to plugin bugs -->
+     <maven.min-version>3.0.4</maven.min-version>
+     <!-- surefire/failsafe plugin option -->
+@@ -199,7 +199,7 @@
+       <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>javax.servlet-api</artifactId>
+-        <version>3.0.1</version>
++        <version>3.1.0</version>
+       </dependency>
+       <dependency>
+         <groupId>javax.ws.rs</groupId>
+@@ -416,11 +416,6 @@
+       </dependency>
+       <dependency>
+         <groupId>org.eclipse.jetty</groupId>
+-        <artifactId>jetty-continuation</artifactId>
+-        <version>${jetty.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.eclipse.jetty</groupId>
+         <artifactId>jetty-http</artifactId>
+         <version>${jetty.version}</version>
+       </dependency>
+diff --git a/server/monitor/pom.xml b/server/monitor/pom.xml
+index fcccc89..23b6d03 100644
+--- a/server/monitor/pom.xml
++++ b/server/monitor/pom.xml
+@@ -81,10 +81,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.eclipse.jetty</groupId>
+-      <artifactId>jetty-http</artifactId>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.eclipse.jetty</groupId>
+       <artifactId>jetty-security</artifactId>
+     </dependency>
+     <dependency>
+@@ -101,7 +97,7 @@
+     </dependency>
+     <dependency>
+       <groupId>org.eclipse.jetty</groupId>
+-      <artifactId>jetty-continuation</artifactId>
++      <artifactId>jetty-http</artifactId>
+       <scope>runtime</scope>
+     </dependency>
+     <dependency>
+diff --git a/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java b/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
+index 82cd436..08cd9df 100644
+--- a/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
++++ b/server/monitor/src/main/java/org/apache/accumulo/monitor/EmbeddedWebServer.java
+@@ -20,11 +20,11 @@ import javax.servlet.http.HttpServlet;
+ 
+ import org.apache.accumulo.core.conf.AccumuloConfiguration;
+ import org.apache.accumulo.core.conf.Property;
+-import org.apache.commons.lang.StringUtils;
++import org.apache.hadoop.util.StringUtils;
++import org.eclipse.jetty.server.HttpConnectionFactory;
+ import org.eclipse.jetty.server.Server;
+-import org.eclipse.jetty.server.nio.SelectChannelConnector;
++import org.eclipse.jetty.server.ServerConnector;
+ import org.eclipse.jetty.server.session.SessionHandler;
+-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+ import org.eclipse.jetty.servlet.ServletContextHandler;
+ import org.eclipse.jetty.util.ssl.SslContextFactory;
+ 
+@@ -32,7 +32,7 @@ public class EmbeddedWebServer {
+   private static String EMPTY = "";
+ 
+   Server server = null;
+-  SelectChannelConnector connector = null;
++  ServerConnector connector = null;
+   ServletContextHandler handler;
+   boolean usingSsl;
+ 
+@@ -45,13 +45,13 @@ public class EmbeddedWebServer {
+     final AccumuloConfiguration conf = Monitor.getSystemConfiguration();
+     if (EMPTY.equals(conf.get(Property.MONITOR_SSL_KEYSTORE)) || EMPTY.equals(conf.get(Property.MONITOR_SSL_KEYSTOREPASS))
+         || EMPTY.equals(conf.get(Property.MONITOR_SSL_TRUSTSTORE)) || EMPTY.equals(conf.get(Property.MONITOR_SSL_TRUSTSTOREPASS))) {
+-      connector = new SelectChannelConnector();
++      connector = new ServerConnector(server, new HttpConnectionFactory());
+       usingSsl = false;
+     } else {
+       SslContextFactory sslContextFactory = new SslContextFactory();
+       sslContextFactory.setKeyStorePath(conf.get(Property.MONITOR_SSL_KEYSTORE));
+       sslContextFactory.setKeyStorePassword(conf.get(Property.MONITOR_SSL_KEYSTOREPASS));
+-      sslContextFactory.setTrustStore(conf.get(Property.MONITOR_SSL_TRUSTSTORE));
++      sslContextFactory.setTrustStorePath(conf.get(Property.MONITOR_SSL_TRUSTSTORE));
+       sslContextFactory.setTrustStorePassword(conf.get(Property.MONITOR_SSL_TRUSTSTOREPASS));
+ 
+       final String includedCiphers = conf.get(Property.MONITOR_SSL_INCLUDE_CIPHERS);
+@@ -63,8 +63,7 @@ public class EmbeddedWebServer {
+       if (!Property.MONITOR_SSL_EXCLUDE_CIPHERS.getDefaultValue().equals(excludedCiphers)) {
+         sslContextFactory.setExcludeCipherSuites(StringUtils.split(excludedCiphers, ','));
+       }
+-
+-      connector = new SslSelectChannelConnector(sslContextFactory);
++      connector = new ServerConnector(server, sslContextFactory);
+       usingSsl = true;
+     }
+ 

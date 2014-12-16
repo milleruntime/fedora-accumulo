@@ -10,17 +10,14 @@
 # jpackage main class
 %global main_class org.apache.%{name}.start.Main
 
-%global commit 06162580e885f11863d1a6d22f952bce35b78b68
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-
 Name:     %{proj}
-Version:  1.6.0
-Release:  7%{?dist}
+Version:  1.6.1
+Release:  1%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
 URL:      http://%{name}.apache.org
-Source0:  https://github.com/apache/%{name}/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
+Source0:  http://www.apache.org/dist/%{name}/%{version}/%{name}-%{version}-src.tar.gz
 
 # systemd service files
 Source1:  %{name}-master.service
@@ -35,24 +32,20 @@ Source5:  %{name}-monitor.service
 Source6: %{name}.conf
 
 # Upstream patches needed for Fedora
-Patch0: ACCUMULO-1691.patch
-Patch1: ACCUMULO-2950.patch
-Patch2: ACCUMULO-2773.patch
-Patch3: ACCUMULO-2762.patch
-Patch4: ACCUMULO-2812.patch
-Patch5: ACCUMULO-2808.patch
 
 # Should be applied after upstream patches
+# Use Jetty version 9 instead of 8
+Patch0: jetty9.patch
 # Use current version of commons-configuration
-Patch6: commons-configuration.patch
+Patch1: commons-configuration.patch
 # Use current version of commons-math
-Patch7: commons-math.patch
+Patch2: commons-math.patch
 # Apply Fedora JNI conventions
-Patch8: native-code.patch
+Patch3: native-code.patch
 # Disable broken tests
-Patch9: disabled-tests.patch
+Patch4: disabled-tests.patch
 # Patch upstream-provided example configuration for Fedora
-Patch10: default-conf.patch
+Patch5: default-conf.patch
 
 # This depends on Hadoop, and Hadoop is not built for ARM
 ExcludeArch: %{arm}
@@ -304,18 +297,13 @@ This package contains the API documentation for %{longproj}.
 %endif
 
 %prep
-%setup -qn %{name}-%{commit}
+%setup -qn %{name}-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
 
 # Update dependency versions
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='jline']/pom:version" "2.10"
@@ -395,7 +383,7 @@ install -p -m 755 server/native/target/%{name}-native-%{version}/%{name}-native-
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib/ext
-bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
+assemble/bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
 for x in gc masters monitor slaves tracers %{name}-env.sh; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
 
 # main launcher
@@ -484,8 +472,10 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-site.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/auditLog.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.xml
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.properties
 %attr(0644, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/log4j.properties
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.xml
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.properties
 
 %files server-base -f .mfiles-server-base
 %{_bindir}/%{name}-init
@@ -582,6 +572,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Tue Dec 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.1-1
+- Update to 1.6.1
+
 * Sun Sep  7 2014 Ville Skyttä <ville.skytta@iki.fi> - 1.6.0-7
 - Fix -debuginfo
 

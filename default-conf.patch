@@ -1,7 +1,7 @@
-diff --git a/conf/templates/accumulo-metrics.xml b/conf/templates/accumulo-metrics.xml
+diff --git a/assemble/conf/templates/accumulo-metrics.xml b/assemble/conf/templates/accumulo-metrics.xml
 index 60f9f8d..f30b098 100644
---- a/conf/templates/accumulo-metrics.xml
-+++ b/conf/templates/accumulo-metrics.xml
+--- a/assemble/conf/templates/accumulo-metrics.xml
++++ b/assemble/conf/templates/accumulo-metrics.xml
 @@ -23,7 +23,8 @@
     Metrics log directory
  -->
@@ -12,10 +12,10 @@ index 60f9f8d..f30b098 100644
    </logging>
  <!--
   Enable/Disable metrics accumulation on the different servers and their components
-diff --git a/conf/templates/accumulo-site.xml b/conf/templates/accumulo-site.xml
+diff --git a/assemble/conf/templates/accumulo-site.xml b/assemble/conf/templates/accumulo-site.xml
 index 052ed7e..7d90774 100644
---- a/conf/templates/accumulo-site.xml
-+++ b/conf/templates/accumulo-site.xml
+--- a/assemble/conf/templates/accumulo-site.xml
++++ b/assemble/conf/templates/accumulo-site.xml
 @@ -22,6 +22,12 @@
      you are simply testing at your workstation, you will most definitely need to change the three entries below. -->
  
