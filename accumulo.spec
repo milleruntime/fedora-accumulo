@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.1
-Release:  2%{?dist}
+Release:  3%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -46,9 +46,6 @@ Patch3: native-code.patch
 Patch4: disabled-tests.patch
 # Patch upstream-provided example configuration for Fedora
 Patch5: default-conf.patch
-
-# This depends on Hadoop, and Hadoop is not built for ARM
-ExcludeArch: %{arm}
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -572,6 +569,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Apr 22 2015 Peter Robinson <pbrobinson@fedoraproject.org> 1.6.1-3
+- ARMv7 now has hadoop
+
 * Tue Dec 16 2014 Christopher Tubbs <ctubbsii@apache> - 1.6.1-2
 - Remove mortbay Jetty deps
 
