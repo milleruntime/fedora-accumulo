@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.1
-Release:  3%{?dist}
+Release:  4%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -569,6 +569,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Mon May 04 2015 Kalev Lember <kalevlember@gmail.com> - 1.6.1-4
+- Rebuilt for GCC 5 C++11 ABI change
+
 * Wed Apr 22 2015 Peter Robinson <pbrobinson@fedoraproject.org> 1.6.1-3
 - ARMv7 now has hadoop
 
