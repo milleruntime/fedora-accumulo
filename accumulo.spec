@@ -11,8 +11,8 @@
 %global main_class org.apache.%{name}.start.Main
 
 Name:     %{proj}
-Version:  1.6.1
-Release:  5%{?dist}
+Version:  1.6.2
+Release:  1%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -569,6 +569,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Jun 25 2015 Christopher Tubbs <ctubbsii@apache> - 1.6.2-1
+- Update to 1.6.2 bugfix release
+
 * Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6.1-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
