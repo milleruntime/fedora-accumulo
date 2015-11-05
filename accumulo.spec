@@ -11,7 +11,7 @@
 %global main_class org.apache.%{name}.start.Main
 
 Name:     %{proj}
-Version:  1.6.2
+Version:  1.6.4
 Release:  1%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
@@ -569,6 +569,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-1
+- Update to 1.6.4
+
 * Thu Jun 25 2015 Christopher Tubbs <ctubbsii@apache> - 1.6.2-1
 - Update to 1.6.2 bugfix release
 
