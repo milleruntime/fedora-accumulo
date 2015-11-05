@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.4
-Release:  1%{?dist}
+Release:  2%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -327,6 +327,8 @@ This package contains the API documentation for %{longproj}.
 %pom_disable_module docs
 %pom_disable_module assemble
 %if !%{include_monitor}
+# mini has dependency on monitor
+%pom_disable_module minicluster
 %pom_disable_module server/monitor
 %endif
 
@@ -340,7 +342,9 @@ This package contains the API documentation for %{longproj}.
 %pom_remove_plugin :findbugs-maven-plugin
 %pom_remove_plugin :maven-project-info-reports-plugin
 
+%if %{include_monitor}
 %mvn_package ":%{name}-minicluster" __noinstall
+%endif
 %mvn_package ":%{name}-{project,core,fate,trace,start}" core
 %mvn_package ":%{name}-examples-simple" examples
 %mvn_package ":%{name}-gc" gc
@@ -441,7 +445,6 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %files
 
 %files core -f .mfiles-core
-%doc CHANGES
 %doc LICENSE
 %doc README
 %doc NOTICE
@@ -569,6 +572,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-2
+- Fix patches for 1.6.4
+
 * Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-1
 - Update to 1.6.4
 

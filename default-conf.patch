@@ -1,5 +1,5 @@
 diff --git a/assemble/conf/templates/accumulo-metrics.xml b/assemble/conf/templates/accumulo-metrics.xml
-index 60f9f8d..f30b098 100644
+index ec54994..04edb84 100644
 --- a/assemble/conf/templates/accumulo-metrics.xml
 +++ b/assemble/conf/templates/accumulo-metrics.xml
 @@ -23,7 +23,8 @@
@@ -13,23 +13,19 @@ index 60f9f8d..f30b098 100644
  <!--
   Enable/Disable metrics accumulation on the different servers and their components
 diff --git a/assemble/conf/templates/accumulo-site.xml b/assemble/conf/templates/accumulo-site.xml
-index 052ed7e..7d90774 100644
+index 7fe3fe4..a9e29e1 100644
 --- a/assemble/conf/templates/accumulo-site.xml
 +++ b/assemble/conf/templates/accumulo-site.xml
-@@ -22,6 +22,12 @@
+@@ -22,18 +22,15 @@
      you are simply testing at your workstation, you will most definitely need to change the three entries below. -->
  
    <property>
+-    <name>instance.zookeeper.host</name>
+-    <value>localhost:2181</value>
+-    <description>comma separated list of zookeeper servers</description>
 +    <name>instance.volumes</name>
 +    <value>file:///tmp/accumulo</value>
 +    <description>comma separated list of dfs URIs</description>
-+  </property>
-+
-+  <property>
-     <name>instance.zookeeper.host</name>
-     <value>localhost:2181</value>
-     <description>comma separated list of zookeeper servers</description>
-@@ -28,15 +28,6 @@
    </property>
  
    <property>
@@ -39,13 +35,13 @@ index 052ed7e..7d90774 100644
 -      filesystem. In 1.5 write-ahead logs are stored in DFS.  When 1.5 is started for the first time it will copy any 1.4
 -      write ahead logs into DFS.  It is possible to specify a comma-separated list of directories.
 -    </description>
--  </property>
--
--  <property>
-     <name>instance.secret</name>
-     <value>DEFAULT</value>
-     <description>A secret unique to a given instance that all servers must know in order to communicate with one another.
-@@ -89,44 +80,13 @@
++    <name>instance.zookeeper.host</name>
++    <value>localhost:2181</value>
++    <description>comma separated list of zookeeper servers</description>
+   </property>
+ 
+   <property>
+@@ -89,49 +86,13 @@
  ${mvnProjBaseDir}
    <property>
      <name>general.classpaths</name>
@@ -58,34 +54,39 @@ index 052ed7e..7d90774 100644
 -      $ACCUMULO_HOME/lib/accumulo-fate.jar,
 -      $ACCUMULO_HOME/lib/accumulo-proxy.jar,
 -      $ACCUMULO_HOME/lib/[^.].*.jar,
--      <!-- End Accumulo requirements -->
--
 -      <!-- ZooKeeper requirements -->
 -      $ZOOKEEPER_HOME/zookeeper[^.].*.jar,
--      <!-- End ZooKeeper requirements -->
--
 -      <!-- Common Hadoop requirements -->
 -      $HADOOP_CONF_DIR,
--      <!-- End Common Hadoop requirements -->
--
 -      <!-- Hadoop 2 requirements -->
 -      $HADOOP_PREFIX/share/hadoop/common/[^.].*.jar,
 -      $HADOOP_PREFIX/share/hadoop/common/lib/(?!slf4j)[^.].*.jar,
 -      $HADOOP_PREFIX/share/hadoop/hdfs/[^.].*.jar,
 -      $HADOOP_PREFIX/share/hadoop/mapreduce/[^.].*.jar,
 -      $HADOOP_PREFIX/share/hadoop/yarn/[^.].*.jar,
+-      $HADOOP_PREFIX/share/hadoop/yarn/lib/jersey.*.jar,
+-      <!-- End Hadoop 2 requirements -->
+-      <!-- HDP 2.0 requirements -->
 -      /usr/lib/hadoop/[^.].*.jar,
 -      /usr/lib/hadoop/lib/[^.].*.jar,
 -      /usr/lib/hadoop-hdfs/[^.].*.jar,
 -      /usr/lib/hadoop-mapreduce/[^.].*.jar,
 -      /usr/lib/hadoop-yarn/[^.].*.jar,
--      <!-- End Hadoop 2 requirements -->
--
+-      /usr/lib/hadoop-yarn/lib/jersey.*.jar,
+-      <!-- End HDP 2.0 requirements -->
+-      <!-- HDP 2.2 requirements -->
+-      /usr/hdp/current/hadoop-client/[^.].*.jar,
+-      /usr/hdp/current/hadoop-client/lib/(?!slf4j)[^.].*.jar,
+-      /usr/hdp/current/hadoop-hdfs-client/[^.].*.jar,
+-      /usr/hdp/current/hadoop-mapreduce-client/[^.].*.jar,
+-      /usr/hdp/current/hadoop-yarn-client/[^.].*.jar,
+-      /usr/hdp/current/hadoop-yarn-client/lib/jersey.*.jar,
+-      /usr/hdp/current/hive-client/lib/hive-accumulo-handler.jar
+-      <!-- End HDP 2.2 requirements -->
 -      <!-- Hadoop 1 requirements -->
 -      $HADOOP_PREFIX/[^.].*.jar,
 -      $HADOOP_PREFIX/lib/(?!slf4j)[^.].*.jar,
 -      <!-- End Hadoop 1 requirements -->
--
 -    </value>
 +    <value>/etc/accumulo/lib</value>
      <description>Classpaths that accumulo checks for updates and class files.</description>

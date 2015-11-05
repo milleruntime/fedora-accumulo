@@ -1,18 +1,5 @@
-diff --git a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java b/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
-index a454d6c..f3015d8 100644
---- a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
-+++ b/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
-@@ -62,7 +62,7 @@ public class NativeMap implements Iterable<Map.Entry<Key,Value>> {
-   // Load native library
-   static {
-     // Check standard directories
--    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64"), new File("/usr/lib")}));
-+    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64/accumulo"), new File("/usr/lib/accumulo")}));
-     // Check in ACCUMULO_HOME location, too
-     String envAccumuloHome = System.getenv("ACCUMULO_HOME");
-     if (envAccumuloHome != null) {
 diff --git a/server/native/src/main/resources/Makefile b/server/native/src/main/resources/Makefile
-index b9211aa..0e93467 100644
+index 9ffeefe..102c253 100644
 --- a/server/native/src/main/resources/Makefile
 +++ b/server/native/src/main/resources/Makefile
 @@ -26,7 +26,7 @@ ifeq ($(shell uname),Linux)
@@ -24,3 +11,16 @@ index b9211aa..0e93467 100644
  endif
  
  ifeq ($(shell uname),Darwin)
+diff --git a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java b/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
+index f728a9b..4a056f0 100644
+--- a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
++++ b/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
+@@ -62,7 +62,7 @@ public class NativeMap implements Iterable<Map.Entry<Key,Value>> {
+   // Load native library
+   static {
+     // Check standard directories
+-    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64"), new File("/usr/lib")}));
++    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64/accumulo"), new File("/usr/lib/accumulo")}));
+     // Check in ACCUMULO_HOME location, too
+     String envAccumuloHome = System.getenv("ACCUMULO_HOME");
+     if (envAccumuloHome != null) {
