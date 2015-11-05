@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.4
-Release:  2%{?dist}
+Release:  3%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -333,6 +333,7 @@ This package contains the API documentation for %{longproj}.
 %endif
 
 # Remove unneeded plugins
+%pom_remove_plugin :maven-checkstyle-plugin
 %pom_remove_plugin :maven-site-plugin
 %pom_remove_plugin :maven-failsafe-plugin
 %pom_remove_plugin :apache-rat-plugin
@@ -572,6 +573,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-3
+- Remove unnecessary checkstyle plugin
+
 * Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-2
 - Fix patches for 1.6.4
 
