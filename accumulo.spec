@@ -12,7 +12,7 @@
 
 Name:     %{proj}
 Version:  1.6.4
-Release:  3%{?dist}
+Release:  4%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -294,13 +294,7 @@ This package contains the API documentation for %{longproj}.
 %endif
 
 %prep
-%setup -qn %{name}-%{version}
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
+%autosetup -p1
 
 # Update dependency versions
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='jline']/pom:version" "2.10"
@@ -573,6 +567,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Nov 12 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-4
+- Use autosetup macro to apply patches
+
 * Thu Nov 05 2015 Christopher Tubbs <ctubbsii-fedora@apache.org> - 1.6.4-3
 - Remove unnecessary checkstyle plugin
 
