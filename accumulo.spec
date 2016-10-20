@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  1%{?dist}
+Release:  2%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -299,6 +299,7 @@ This package provides native code for %{longproj}'s TServer.
 %pom_remove_plugin :mavanagaiata
 %pom_remove_plugin :findbugs-maven-plugin
 %pom_remove_plugin :maven-java-formatter-plugin
+%pom_remove_plugin :modernizer-maven-plugin
 
 %if %{include_monitor}
 %mvn_package ":%{name}-minicluster" __noinstall
@@ -518,6 +519,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-2
+- Remove modernizer plugin
+
 * Wed Oct 19 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-1
 - Update to 1.6.6
 
