@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  2%{?dist}
+Release:  3%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -278,6 +278,10 @@ This package provides native code for %{longproj}'s TServer.
 %pom_xpath_set "pom:project/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3" core
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='bcprov-jdk15on']/pom:artifactId" "bcprov-jdk16"
 
+# Remove enforcer animal-sniffer rule
+%pom_xpath_remove "pom:project/pom:build/pom:pluginManagement/pom:plugins/pom:plugin[pom:artifactId='maven-enforcer-plugin']/pom:dependencies"
+%pom_xpath_remove "pom:project/pom:build/pom:plugins/pom:plugin[pom:artifactId='maven-enforcer-plugin']/pom:executions/pom:execution[pom:id='enforce-java-signatures']"
+
 # Disable unneeded/unused modules
 %pom_disable_module test
 %pom_disable_module proxy
@@ -519,6 +523,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-3
+- Remove animal sniffer enforcer rule
+
 * Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-2
 - Remove modernizer plugin
 
