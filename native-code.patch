@@ -2,8 +2,8 @@ diff --git a/server/native/src/main/resources/Makefile b/server/native/src/main/
 index 9ffeefe..102c253 100644
 --- a/server/native/src/main/resources/Makefile
 +++ b/server/native/src/main/resources/Makefile
-@@ -26,7 +26,7 @@ ifeq ($(shell uname),Linux)
- 		JAVA_HOME=$(shell dirname "$$(dirname "$$(readlink -ef "$$(which javah)")")")
+@@ -30,7 +30,7 @@ ifeq ($(shell uname),Linux)
+ 		JAVA_HOME=$(shell dirname "$$(dirname "$$(readlink -e "$$(which javah)")")")
  	endif
  	NATIVE_LIB := libaccumulo.so
 -	CXXFLAGS=-g -fPIC -shared -O3 -Wall -I'$(JAVA_HOME)'/include -I'$(JAVA_HOME)'/include/linux -Ijavah $(USERFLAGS)
