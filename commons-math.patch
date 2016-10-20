@@ -21,3 +21,16 @@ index d2d560e..2fdfd62 100644
  
  public class Stat {
    Min min;
+diff --git a/core/src/main/java/org/apache/accumulo/core/file/rfile/RFile.java b/core/src/main/java/org/apache/accumulo/core/file/rfile/RFile.java
+index d2d560e..2fdfd62 100644
+--- a/core/src/main/java/org/apache/accumulo/core/file/rfile/RFile.java
++++ b/core/src/main/java/org/apache/accumulo/core/file/rfile/RFile.java
+@@ -64,7 +64,7 @@
+ import org.apache.accumulo.core.iterators.system.LocalityGroupIterator.LocalityGroup;
+ import org.apache.accumulo.core.util.MutableByteSequence;
+ import org.apache.commons.lang.mutable.MutableLong;
+-import org.apache.commons.math.stat.descriptive.SummaryStatistics;
++import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+ import org.apache.hadoop.io.Writable;
+ import org.apache.log4j.Logger;
+ 

@@ -29,15 +29,15 @@ diff --git a/pom.xml b/pom.xml
 index bd206e3..3d0d903 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -128,7 +128,7 @@
+@@ -131,7 +131,7 @@
      <hadoop.version>2.2.0</hadoop.version>
      <httpclient.version>3.1</httpclient.version>
-     <java.ver>1.6</java.ver>
+     <it.failIfNoSpecifiedTests>false</it.failIfNoSpecifiedTests>
 -    <jetty.version>8.1.15.v20140411</jetty.version>
 +    <jetty.version>9.1.5.v20140505</jetty.version>
-     <!-- the maven-release-plugin makes this recommendation, due to plugin bugs -->
-     <maven.min-version>3.0.4</maven.min-version>
-     <!-- surefire/failsafe plugin option -->
+     <maven.compiler.source>1.6</maven.compiler.source>
+     <maven.compiler.target>1.6</maven.compiler.target>
+     <maven.min-version>3.0.5</maven.min-version>
 @@ -204,7 +204,7 @@
        <dependency>
          <groupId>javax.servlet</groupId>

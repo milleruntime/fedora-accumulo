@@ -4,20 +4,17 @@
 # TODO monitor not included until dependent javascript libs are packaged
 %global include_monitor 0
 
-# control javadocs (javadocs are optional; see FESCo #1263)
-%global include_javadocs 0
-
 # jpackage main class
 %global main_class org.apache.%{name}.start.Main
 
 Name:     %{proj}
-Version:  1.6.4
-Release:  5%{?dist}
+Version:  1.6.6
+Release:  1%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
-URL:      http://%{name}.apache.org
-Source0:  http://www.apache.org/dist/%{name}/%{version}/%{name}-%{version}-src.tar.gz
+URL:      https://%{name}.apache.org
+Source0:  https://www.apache.org/dist/%{name}/%{version}/%{name}-%{version}-src.tar.gz
 
 # systemd service files
 Source1:  %{name}-master.service
@@ -71,11 +68,7 @@ BuildRequires: jetty-util
 BuildRequires: jline2
 BuildRequires: jpackage-utils
 BuildRequires: libthrift-java
-%if 0%{?fedora} < 21
-BuildRequires: log4j
-%else
 BuildRequires: log4j12
-%endif
 BuildRequires: maven-local
 BuildRequires: mvn(javax.servlet:javax.servlet-api)
 BuildRequires: native-maven-plugin
@@ -111,11 +104,7 @@ License: ASL 2.0 and BSD
 Group: Applications/System
 BuildArch: noarch
 Requires(pre): /usr/sbin/useradd
-%if !%{include_javadocs}
-%if 0%{?fedora} > 20
 Obsoletes: %{name}-javadoc < 1.6.0-5%{?dist}
-%endif
-%endif
 
 %description core
   %{longproj} is a sorted, distributed key/value store based on Google's
@@ -276,23 +265,6 @@ modify key/value pairs at various points in the data management process.
 
 This package provides native code for %{longproj}'s TServer.
 
-%if %{include_javadocs}
-%package javadoc
-Summary: Javadoc for %{longproj}
-License:  ASL 2.0
-Group: Documentation
-BuildArch: noarch
-
-%description javadoc
-  %{longproj} is a sorted, distributed key/value store based on Google's
-BigTable design. It is built on top of Apache Hadoop, Zookeeper, and Thrift. It
-features a few novel improvements on the BigTable design in the form of
-cell-level access labels and a server-side programming mechanism that can
-modify key/value pairs at various points in the data management process.
-
-This package contains the API documentation for %{longproj}.
-%endif
-
 %prep
 %autosetup -p1
 
@@ -305,14 +277,6 @@ This package contains the API documentation for %{longproj}.
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3"
 %pom_xpath_set "pom:project/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3" core
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='bcprov-jdk15on']/pom:artifactId" "bcprov-jdk16"
-
-%if %{include_javadocs}
-# Remove custom javadoc directory so xmvn javadoc magic works
-%pom_xpath_remove "pom:project/pom:build/pom:pluginManagement/pom:plugins/pom:plugin[pom:artifactId='maven-javadoc-plugin']/pom:configuration/pom:reportOutputDirectory"
-%endif
-
-# Remove unused extension; no need to deploy site with ssh
-%pom_xpath_remove "pom:project/pom:build/pom:extensions/pom:extension[pom:artifactId='wagon-ssh']"
 
 # Disable unneeded/unused modules
 %pom_disable_module test
@@ -331,11 +295,10 @@ This package contains the API documentation for %{longproj}.
 %pom_remove_plugin :maven-site-plugin
 %pom_remove_plugin :maven-failsafe-plugin
 %pom_remove_plugin :apache-rat-plugin
-%pom_remove_plugin :maven-sortpom-plugin
+%pom_remove_plugin :sortpom-maven-plugin
 %pom_remove_plugin :mavanagaiata
-%pom_remove_plugin :maven-scm-publish-plugin
 %pom_remove_plugin :findbugs-maven-plugin
-%pom_remove_plugin :maven-project-info-reports-plugin
+%pom_remove_plugin :maven-java-formatter-plugin
 
 %if %{include_monitor}
 %mvn_package ":%{name}-minicluster" __noinstall
@@ -361,11 +324,7 @@ This package contains the API documentation for %{longproj}.
 # especially in the start jar. These should be enabled when possible.
 # ITs are skipped, because they time out frequently and take too many resources
 # to run reliably. Failures do not reliably indicate meaningful issues.
-%if %{include_javadocs}
-%mvn_build -- -DforkCount=1C -DskipTests -DskipITs
-%else
 %mvn_build -j -- -DforkCount=1C -DskipTests -DskipITs
-%endif
 
 %install
 %mvn_install
@@ -444,9 +403,7 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %doc README
 %doc NOTICE
 %dir %{_javadir}/%{name}
-%if 0%{?fedora} > 20
 %dir %{_mavenpomdir}/%{name}
-%endif
 %{_bindir}/%{name}
 %{_bindir}/%{name}-shell
 %{_bindir}/%{name}-classpath
@@ -481,9 +438,7 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %{_unitdir}/%{name}-master.service
 
 %files tserver -f .mfiles-tserver
-%if 0%{?fedora} > 20
 %dir %{_jnidir}/%{name}
-%endif
 %{_bindir}/%{name}-tserver
 %{_unitdir}/%{name}-tserver.service
 
@@ -502,10 +457,6 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %{_unitdir}/%{name}-tracer.service
 
 %files examples -f .mfiles-examples
-
-%if %{include_javadocs}
-%files javadoc -f .mfiles-javadoc
-%endif
 
 %files native
 %dir %{_libdir}/%{name}
@@ -567,6 +518,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Oct 19 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-1
+- Update to 1.6.6
+
 * Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.6.4-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
