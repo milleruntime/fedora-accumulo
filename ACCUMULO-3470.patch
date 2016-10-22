@@ -1,0 +1,1164 @@
+From b363e88772ccda2a3bdeddd9378c89266c386cd3 Mon Sep 17 00:00:00 2001
+From: Dave Marion <dlmarion@apache.org>
+Date: Fri, 20 May 2016 12:35:55 -0400
+Subject: [PATCH 1/1] ACCUMULO-3470: Set commons-vfs2 version to 2.1, removed
+ VFS related classes, updated imports
+
+---
+ pom.xml                                            |   2 +-
+ .../classloader/vfs/AccumuloVFSClassLoader.java    |   4 +-
+ .../vfs/providers/HdfsFileAttributes.java          |  59 ----
+ .../vfs/providers/HdfsFileContentInfoFactory.java  |  49 ---
+ .../classloader/vfs/providers/HdfsFileObject.java  | 303 -------------------
+ .../vfs/providers/HdfsFileProvider.java            |  75 -----
+ .../classloader/vfs/providers/HdfsFileSystem.java  | 137 ---------
+ .../vfs/providers/HdfsFileSystemConfigBuilder.java |  45 ---
+ .../vfs/providers/HdfsRandomAccessContent.java     | 329 ---------------------
+ .../start/classloader/vfs/providers/package.html   |  19 --
+ .../providers/ReadOnlyHdfsFileProviderTest.java    |   2 +
+ .../org/apache/accumulo/test/AccumuloDFSBase.java  |   2 +-
+ 12 files changed, 6 insertions(+), 1020 deletions(-)
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileAttributes.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileContentInfoFactory.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileObject.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileProvider.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystem.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystemConfigBuilder.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsRandomAccessContent.java
+ delete mode 100644 start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/package.html
+
+diff --git a/pom.xml b/pom.xml
+index d4b3867..2b48125 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -336,7 +336,7 @@
+       <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-vfs2</artifactId>
+-        <version>2.0</version>
++        <version>2.1</version>
+       </dependency>
+       <dependency>
+         <groupId>org.apache.hadoop</groupId>
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/AccumuloVFSClassLoader.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/AccumuloVFSClassLoader.java
+index 38d7469..98b3b54 100644
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/AccumuloVFSClassLoader.java
++++ b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/AccumuloVFSClassLoader.java
+@@ -27,8 +27,6 @@ import java.util.Collections;
+ import java.util.List;
+ 
+ import org.apache.accumulo.start.classloader.AccumuloClassLoader;
+-import org.apache.accumulo.start.classloader.vfs.providers.HdfsFileObject;
+-import org.apache.accumulo.start.classloader.vfs.providers.HdfsFileProvider;
+ import org.apache.commons.io.FileUtils;
+ import org.apache.commons.vfs2.CacheStrategy;
+ import org.apache.commons.vfs2.FileObject;
+@@ -40,6 +38,8 @@ import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
+ import org.apache.commons.vfs2.impl.FileContentInfoFilenameFactory;
+ import org.apache.commons.vfs2.impl.VFSClassLoader;
+ import org.apache.commons.vfs2.provider.FileReplicator;
++import org.apache.commons.vfs2.provider.hdfs.HdfsFileObject;
++import org.apache.commons.vfs2.provider.hdfs.HdfsFileProvider;
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.fs.FileSystem;
+ import org.apache.log4j.Logger;
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileAttributes.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileAttributes.java
+deleted file mode 100644
+index bfdd561..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileAttributes.java
++++ /dev/null
+@@ -1,59 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-/**
+- * HDFS file content attributes.
+- *
+- * @since 2.1
+- */
+-public enum HdfsFileAttributes {
+-  /**
+-   * Last access time.
+-   */
+-  LAST_ACCESS_TIME,
+-
+-  /**
+-   * Block size.
+-   */
+-  BLOCK_SIZE,
+-
+-  /**
+-   * Group.
+-   */
+-  GROUP,
+-
+-  /**
+-   * Owner.
+-   */
+-  OWNER,
+-
+-  /**
+-   * Permissions.
+-   */
+-  PERMISSIONS,
+-
+-  /**
+-   * Length.
+-   */
+-  LENGTH,
+-
+-  /**
+-   * Modification time.
+-   */
+-  MODIFICATION_TIME;
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileContentInfoFactory.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileContentInfoFactory.java
+deleted file mode 100644
+index b1a4abe..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileContentInfoFactory.java
++++ /dev/null
+@@ -1,49 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import org.apache.commons.vfs2.FileContent;
+-import org.apache.commons.vfs2.FileContentInfo;
+-import org.apache.commons.vfs2.FileContentInfoFactory;
+-import org.apache.commons.vfs2.FileSystemException;
+-import org.apache.commons.vfs2.impl.DefaultFileContentInfo;
+-
+-/**
+- * Creates FileContentInfo instances for HDFS.
+- *
+- * @since 2.1
+- */
+-public class HdfsFileContentInfoFactory implements FileContentInfoFactory {
+-  private static final java.nio.charset.Charset UTF_8 = java.nio.charset.Charset.forName("UTF-8");
+-  private static final String CONTENT = "text/plain";
+-  private static final String ENCODING = UTF_8.name();
+-
+-  /**
+-   * Creates a FileContentInfo for a the given FileContent.
+-   *
+-   * @param fileContent
+-   *          Use this FileContent to create a matching FileContentInfo
+-   * @return a FileContentInfo for the given FileContent with content set to "text/plain" and encoding set to "UTF-8"
+-   * @throws FileSystemException
+-   *           when a problem occurs creating the FileContentInfo.
+-   */
+-  @Override
+-  public FileContentInfo create(final FileContent fileContent) throws FileSystemException {
+-    return new DefaultFileContentInfo(CONTENT, ENCODING);
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileObject.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileObject.java
+deleted file mode 100644
+index 6849073..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileObject.java
++++ /dev/null
+@@ -1,303 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import java.io.FileNotFoundException;
+-import java.io.InputStream;
+-import java.util.HashMap;
+-import java.util.Map;
+-
+-import org.apache.commons.vfs2.FileNotFolderException;
+-import org.apache.commons.vfs2.FileObject;
+-import org.apache.commons.vfs2.FileSystemException;
+-import org.apache.commons.vfs2.FileType;
+-import org.apache.commons.vfs2.RandomAccessContent;
+-import org.apache.commons.vfs2.provider.AbstractFileName;
+-import org.apache.commons.vfs2.provider.AbstractFileObject;
+-import org.apache.commons.vfs2.util.RandomAccessMode;
+-import org.apache.hadoop.fs.FileStatus;
+-import org.apache.hadoop.fs.FileSystem;
+-import org.apache.hadoop.fs.Path;
+-
+-/**
+- * A VFS representation of an HDFS file.
+- *
+- * @since 2.1
+- */
+-public class HdfsFileObject extends AbstractFileObject {
+-  private final HdfsFileSystem fs;
+-  private final FileSystem hdfs;
+-  private final Path path;
+-  private FileStatus stat;
+-
+-  /**
+-   * Constructs a new HDFS FileObject
+-   *
+-   * @param name
+-   *          FileName
+-   * @param fs
+-   *          HdfsFileSystem instance
+-   * @param hdfs
+-   *          Hadoop FileSystem instance
+-   * @param p
+-   *          Path to the file in HDFS
+-   */
+-  protected HdfsFileObject(final AbstractFileName name, final HdfsFileSystem fs, final FileSystem hdfs, final Path p) {
+-    super(name, fs);
+-    this.fs = fs;
+-    this.hdfs = hdfs;
+-    this.path = p;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#canRenameTo(org.apache.commons.vfs2.FileObject)
+-   */
+-  @Override
+-  public boolean canRenameTo(final FileObject newfile) {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doAttach()
+-   */
+-  @Override
+-  protected void doAttach() throws Exception {
+-    try {
+-      this.stat = this.hdfs.getFileStatus(this.path);
+-    } catch (final FileNotFoundException e) {
+-      this.stat = null;
+-      return;
+-    }
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetAttributes()
+-   */
+-  @Override
+-  protected Map<String,Object> doGetAttributes() throws Exception {
+-    if (null == this.stat) {
+-      return super.doGetAttributes();
+-    } else {
+-      final Map<String,Object> attrs = new HashMap<String,Object>();
+-      attrs.put(HdfsFileAttributes.LAST_ACCESS_TIME.toString(), this.stat.getAccessTime());
+-      attrs.put(HdfsFileAttributes.BLOCK_SIZE.toString(), this.stat.getBlockSize());
+-      attrs.put(HdfsFileAttributes.GROUP.toString(), this.stat.getGroup());
+-      attrs.put(HdfsFileAttributes.OWNER.toString(), this.stat.getOwner());
+-      attrs.put(HdfsFileAttributes.PERMISSIONS.toString(), this.stat.getPermission().toString());
+-      attrs.put(HdfsFileAttributes.LENGTH.toString(), this.stat.getLen());
+-      attrs.put(HdfsFileAttributes.MODIFICATION_TIME.toString(), this.stat.getModificationTime());
+-      return attrs;
+-    }
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetContentSize()
+-   */
+-  @Override
+-  protected long doGetContentSize() throws Exception {
+-    return stat.getLen();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetInputStream()
+-   */
+-  @Override
+-  protected InputStream doGetInputStream() throws Exception {
+-    return this.hdfs.open(this.path);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetLastModifiedTime()
+-   */
+-  @Override
+-  protected long doGetLastModifiedTime() throws Exception {
+-    if (null != this.stat) {
+-      return this.stat.getModificationTime();
+-    } else {
+-      return -1;
+-    }
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetRandomAccessContent (org.apache.commons.vfs2.util.RandomAccessMode)
+-   */
+-  @Override
+-  protected RandomAccessContent doGetRandomAccessContent(final RandomAccessMode mode) throws Exception {
+-    if (mode.equals(RandomAccessMode.READWRITE)) {
+-      throw new UnsupportedOperationException();
+-    }
+-    return new HdfsRandomAccessContent(this.path, this.hdfs);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doGetType()
+-   */
+-  @Override
+-  // TODO Remove deprecation warning suppression when Hadoop1 support is dropped
+-  @SuppressWarnings("deprecation")
+-  protected FileType doGetType() throws Exception {
+-    try {
+-      doAttach();
+-      if (null == stat) {
+-        return FileType.IMAGINARY;
+-      }
+-      if (stat.isDir()) {
+-        return FileType.FOLDER;
+-      } else {
+-        return FileType.FILE;
+-      }
+-    } catch (final FileNotFoundException fnfe) {
+-      return FileType.IMAGINARY;
+-    }
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doIsHidden()
+-   */
+-  @Override
+-  protected boolean doIsHidden() throws Exception {
+-    return false;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doIsReadable()
+-   */
+-  @Override
+-  protected boolean doIsReadable() throws Exception {
+-    return true;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doIsSameFile(org.apache.commons.vfs2.FileObject)
+-   */
+-  @Override
+-  protected boolean doIsSameFile(final FileObject destFile) throws FileSystemException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doIsWriteable()
+-   */
+-  @Override
+-  protected boolean doIsWriteable() throws Exception {
+-    return false;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doListChildren()
+-   */
+-  @Override
+-  protected String[] doListChildren() throws Exception {
+-    if (this.doGetType() != FileType.FOLDER) {
+-      throw new FileNotFolderException(this);
+-    }
+-
+-    final FileStatus[] files = this.hdfs.listStatus(this.path);
+-    final String[] children = new String[files.length];
+-    int i = 0;
+-    for (final FileStatus status : files) {
+-      children[i++] = status.getPath().getName();
+-    }
+-    return children;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doListChildrenResolved()
+-   */
+-  @Override
+-  protected FileObject[] doListChildrenResolved() throws Exception {
+-    if (this.doGetType() != FileType.FOLDER) {
+-      return null;
+-    }
+-    final String[] children = doListChildren();
+-    final FileObject[] fo = new FileObject[children.length];
+-    for (int i = 0; i < children.length; i++) {
+-      final Path p = new Path(this.path, children[i]);
+-      fo[i] = this.fs.resolveFile(p.toUri().toString());
+-    }
+-    return fo;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doRemoveAttribute(java.lang.String)
+-   */
+-  @Override
+-  protected void doRemoveAttribute(final String attrName) throws Exception {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doSetAttribute(java.lang.String, java.lang.Object)
+-   */
+-  @Override
+-  protected void doSetAttribute(final String attrName, final Object value) throws Exception {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#doSetLastModifiedTime(long)
+-   */
+-  @Override
+-  protected boolean doSetLastModifiedTime(final long modtime) throws Exception {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.lang.Object#equals(java.lang.Object)
+-   */
+-  @Override
+-  public boolean equals(final Object o) {
+-    if (null == o) {
+-      return false;
+-    }
+-    if (o == this) {
+-      return true;
+-    }
+-    if (o instanceof HdfsFileObject) {
+-      final HdfsFileObject other = (HdfsFileObject) o;
+-      if (other.path.equals(this.path)) {
+-        return true;
+-      }
+-    }
+-    return false;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileObject#exists()
+-   * @return boolean true if file exists, false if not
+-   */
+-  @Override
+-  public boolean exists() throws FileSystemException {
+-    try {
+-      doAttach();
+-      return this.stat != null;
+-    } catch (final FileNotFoundException fne) {
+-      return false;
+-    } catch (final Exception e) {
+-      throw new FileSystemException("Unable to check existance ", e);
+-    }
+-  }
+-
+-  /**
+-   * @see java.lang.Object#hashCode()
+-   */
+-  @Override
+-  public int hashCode() {
+-    return this.path.getName().toString().hashCode();
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileProvider.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileProvider.java
+deleted file mode 100644
+index 9ddfab5..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileProvider.java
++++ /dev/null
+@@ -1,75 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import java.util.Arrays;
+-import java.util.Collection;
+-import java.util.Collections;
+-
+-import org.apache.commons.vfs2.Capability;
+-import org.apache.commons.vfs2.FileName;
+-import org.apache.commons.vfs2.FileSystem;
+-import org.apache.commons.vfs2.FileSystemConfigBuilder;
+-import org.apache.commons.vfs2.FileSystemException;
+-import org.apache.commons.vfs2.FileSystemOptions;
+-import org.apache.commons.vfs2.provider.AbstractOriginatingFileProvider;
+-import org.apache.commons.vfs2.provider.http.HttpFileNameParser;
+-
+-/**
+- * FileProvider for HDFS files.
+- *
+- * @since 2.1
+- */
+-public class HdfsFileProvider extends AbstractOriginatingFileProvider {
+-  protected static final Collection<Capability> CAPABILITIES = Collections.unmodifiableCollection(Arrays.asList(new Capability[] {Capability.GET_TYPE,
+-      Capability.READ_CONTENT, Capability.URI, Capability.GET_LAST_MODIFIED, Capability.ATTRIBUTES, Capability.RANDOM_ACCESS_READ,
+-      Capability.DIRECTORY_READ_CONTENT, Capability.LIST_CHILDREN}));
+-
+-  /**
+-   * Constructs a new HdfsFileProvider
+-   */
+-  public HdfsFileProvider() {
+-    super();
+-    this.setFileNameParser(HttpFileNameParser.getInstance());
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractOriginatingFileProvider#doCreateFileSystem(org.apache.commons.vfs2.FileName,
+-   *      org.apache.commons.vfs2.FileSystemOptions)
+-   */
+-  @Override
+-  protected FileSystem doCreateFileSystem(final FileName rootName, final FileSystemOptions fileSystemOptions) throws FileSystemException {
+-    return new HdfsFileSystem(rootName, fileSystemOptions);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.FileProvider#getCapabilities()
+-   */
+-  @Override
+-  public Collection<Capability> getCapabilities() {
+-    return CAPABILITIES;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileProvider#getConfigBuilder()
+-   */
+-  @Override
+-  public FileSystemConfigBuilder getConfigBuilder() {
+-    return HdfsFileSystemConfigBuilder.getInstance();
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystem.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystem.java
+deleted file mode 100644
+index 8d45555..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystem.java
++++ /dev/null
+@@ -1,137 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import java.io.IOException;
+-import java.io.UnsupportedEncodingException;
+-import java.net.URLDecoder;
+-import java.util.Collection;
+-
+-import org.apache.commons.logging.Log;
+-import org.apache.commons.logging.LogFactory;
+-import org.apache.commons.vfs2.CacheStrategy;
+-import org.apache.commons.vfs2.Capability;
+-import org.apache.commons.vfs2.FileName;
+-import org.apache.commons.vfs2.FileObject;
+-import org.apache.commons.vfs2.FileSystemException;
+-import org.apache.commons.vfs2.FileSystemOptions;
+-import org.apache.commons.vfs2.provider.AbstractFileName;
+-import org.apache.commons.vfs2.provider.AbstractFileSystem;
+-import org.apache.hadoop.conf.Configuration;
+-import org.apache.hadoop.fs.FileSystem;
+-import org.apache.hadoop.fs.Path;
+-
+-/**
+- * A VFS FileSystem that interacts with HDFS.
+- *
+- * @since 2.1
+- */
+-public class HdfsFileSystem extends AbstractFileSystem {
+-  private static final java.nio.charset.Charset UTF_8 = java.nio.charset.Charset.forName("UTF-8");
+-  private static final Log log = LogFactory.getLog(HdfsFileSystem.class);
+-
+-  private FileSystem fs;
+-
+-  protected HdfsFileSystem(final FileName rootName, final FileSystemOptions fileSystemOptions) {
+-    super(rootName, null, fileSystemOptions);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileSystem#addCapabilities(java.util.Collection)
+-   */
+-  @Override
+-  protected void addCapabilities(final Collection<Capability> capabilities) {
+-    capabilities.addAll(HdfsFileProvider.CAPABILITIES);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileSystem#close()
+-   */
+-  @Override
+-  synchronized public void close() {
+-    try {
+-      if (null != fs) {
+-        fs.close();
+-      }
+-    } catch (final IOException e) {
+-      throw new RuntimeException("Error closing HDFS client", e);
+-    }
+-    super.close();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileSystem#createFile(org.apache.commons.vfs2.provider.AbstractFileName)
+-   */
+-  @Override
+-  protected FileObject createFile(final AbstractFileName name) throws Exception {
+-    throw new FileSystemException("Operation not supported");
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.provider.AbstractFileSystem#resolveFile(org.apache.commons.vfs2.FileName)
+-   */
+-  @Override
+-  public FileObject resolveFile(final FileName name) throws FileSystemException {
+-
+-    synchronized (this) {
+-      if (null == this.fs) {
+-        final String hdfsUri = name.getRootURI();
+-        final Configuration conf = new Configuration(true);
+-        conf.set(org.apache.hadoop.fs.FileSystem.FS_DEFAULT_NAME_KEY, hdfsUri);
+-        this.fs = null;
+-        try {
+-          fs = org.apache.hadoop.fs.FileSystem.get(conf);
+-        } catch (final IOException e) {
+-          log.error("Error connecting to filesystem " + hdfsUri, e);
+-          throw new FileSystemException("Error connecting to filesystem " + hdfsUri, e);
+-        }
+-      }
+-    }
+-
+-    boolean useCache = (null != getContext().getFileSystemManager().getFilesCache());
+-    FileObject file;
+-    if (useCache) {
+-      file = this.getFileFromCache(name);
+-    } else {
+-      file = null;
+-    }
+-    if (null == file) {
+-      String path = null;
+-      try {
+-        path = URLDecoder.decode(name.getPath(), UTF_8.name());
+-      } catch (final UnsupportedEncodingException e) {
+-        path = name.getPath();
+-      }
+-      final Path filePath = new Path(path);
+-      file = new HdfsFileObject((AbstractFileName) name, this, fs, filePath);
+-      if (useCache) {
+-        this.putFileToCache(file);
+-      }
+-
+-    }
+-
+-    /**
+-     * resync the file information if requested
+-     */
+-    if (getFileSystemManager().getCacheStrategy().equals(CacheStrategy.ON_RESOLVE)) {
+-      file.refresh();
+-    }
+-
+-    return file;
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystemConfigBuilder.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystemConfigBuilder.java
+deleted file mode 100644
+index 0defa56..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsFileSystemConfigBuilder.java
++++ /dev/null
+@@ -1,45 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import org.apache.commons.vfs2.FileSystem;
+-import org.apache.commons.vfs2.FileSystemConfigBuilder;
+-
+-/**
+- * Configuration settings for the HdfsFileSystem.
+- *
+- * @since 2.1
+- */
+-public class HdfsFileSystemConfigBuilder extends FileSystemConfigBuilder {
+-  private static final HdfsFileSystemConfigBuilder BUILDER = new HdfsFileSystemConfigBuilder();
+-
+-  /**
+-   * @return HdfsFileSystemConfigBuilder instance
+-   */
+-  public static HdfsFileSystemConfigBuilder getInstance() {
+-    return BUILDER;
+-  }
+-
+-  /**
+-   * @return HDFSFileSystem
+-   */
+-  @Override
+-  protected Class<? extends FileSystem> getConfigClass() {
+-    return HdfsFileSystem.class;
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsRandomAccessContent.java b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsRandomAccessContent.java
+deleted file mode 100644
+index 30140ba..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/HdfsRandomAccessContent.java
++++ /dev/null
+@@ -1,329 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.accumulo.start.classloader.vfs.providers;
+-
+-import java.io.BufferedReader;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import java.io.InputStreamReader;
+-
+-import org.apache.commons.vfs2.RandomAccessContent;
+-import org.apache.hadoop.fs.FSDataInputStream;
+-import org.apache.hadoop.fs.FileSystem;
+-import org.apache.hadoop.fs.Path;
+-
+-/**
+- * Provides random access to content in an HdfsFileObject. Currently this only supports read operations. All write operations throw an
+- * {@link UnsupportedOperationException}.
+- *
+- * @since 2.1
+- */
+-public class HdfsRandomAccessContent implements RandomAccessContent {
+-  private static final java.nio.charset.Charset UTF_8 = java.nio.charset.Charset.forName("UTF-8");
+-  private final FileSystem fs;
+-  private final Path path;
+-  private final FSDataInputStream fis;
+-
+-  /**
+-   *
+-   * @param path
+-   *          A Hadoop Path
+-   * @param fs
+-   *          A Hadoop FileSystem
+-   * @throws IOException
+-   *           when the path cannot be processed.
+-   */
+-  public HdfsRandomAccessContent(final Path path, final FileSystem fs) throws IOException {
+-    this.fs = fs;
+-    this.path = path;
+-    this.fis = this.fs.open(this.path);
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.RandomAccessContent#close()
+-   */
+-  @Override
+-  public void close() throws IOException {
+-    this.fis.close();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.RandomAccessContent#getFilePointer()
+-   */
+-  @Override
+-  public long getFilePointer() throws IOException {
+-    return this.fis.getPos();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.RandomAccessContent#getInputStream()
+-   */
+-  @Override
+-  public InputStream getInputStream() throws IOException {
+-    return this.fis;
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.RandomAccessContent#length()
+-   */
+-  @Override
+-  public long length() throws IOException {
+-    return this.fs.getFileStatus(this.path).getLen();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readBoolean()
+-   */
+-  @Override
+-  public boolean readBoolean() throws IOException {
+-    return this.fis.readBoolean();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readByte()
+-   */
+-  @Override
+-  public byte readByte() throws IOException {
+-    return this.fis.readByte();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readChar()
+-   */
+-  @Override
+-  public char readChar() throws IOException {
+-    return this.fis.readChar();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readDouble()
+-   */
+-  @Override
+-  public double readDouble() throws IOException {
+-    return this.fis.readDouble();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readFloat()
+-   */
+-  @Override
+-  public float readFloat() throws IOException {
+-    return this.fis.readFloat();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readFully(byte[])
+-   */
+-  @Override
+-  public void readFully(final byte[] b) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readFully(byte[], int, int)
+-   */
+-  @Override
+-  public void readFully(final byte[] b, final int off, final int len) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readInt()
+-   */
+-  @Override
+-  public int readInt() throws IOException {
+-    return this.fis.readInt();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readLine()
+-   */
+-  @Override
+-  public String readLine() throws IOException {
+-    BufferedReader d = new BufferedReader(new InputStreamReader(this.fis, UTF_8));
+-    return d.readLine();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readLong()
+-   */
+-  @Override
+-  public long readLong() throws IOException {
+-    return this.fis.readLong();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readShort()
+-   */
+-  @Override
+-  public short readShort() throws IOException {
+-    return this.fis.readShort();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readUnsignedByte()
+-   */
+-  @Override
+-  public int readUnsignedByte() throws IOException {
+-    return this.fis.readUnsignedByte();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readUnsignedShort()
+-   */
+-  @Override
+-  public int readUnsignedShort() throws IOException {
+-    return this.fis.readUnsignedShort();
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#readUTF()
+-   */
+-  @Override
+-  public String readUTF() throws IOException {
+-    return this.fis.readUTF();
+-  }
+-
+-  /**
+-   * @see org.apache.commons.vfs2.RandomAccessContent#seek(long)
+-   */
+-  @Override
+-  public void seek(final long pos) throws IOException {
+-    this.fis.seek(pos);
+-  }
+-
+-  /**
+-   * @see java.io.DataInput#skipBytes(int)
+-   */
+-  @Override
+-  public int skipBytes(final int n) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#write(byte[])
+-   */
+-  @Override
+-  public void write(final byte[] b) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#write(byte[], int, int)
+-   */
+-  @Override
+-  public void write(final byte[] b, final int off, final int len) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#write(int)
+-   */
+-  @Override
+-  public void write(final int b) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeBoolean(boolean)
+-   */
+-  @Override
+-  public void writeBoolean(final boolean v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeByte(int)
+-   */
+-  @Override
+-  public void writeByte(final int v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeBytes(java.lang.String)
+-   */
+-  @Override
+-  public void writeBytes(final String s) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeChar(int)
+-   */
+-  @Override
+-  public void writeChar(final int v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeChars(java.lang.String)
+-   */
+-  @Override
+-  public void writeChars(final String s) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeDouble(double)
+-   */
+-  @Override
+-  public void writeDouble(final double v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeFloat(float)
+-   */
+-  @Override
+-  public void writeFloat(final float v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeInt(int)
+-   */
+-  @Override
+-  public void writeInt(final int v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeLong(long)
+-   */
+-  @Override
+-  public void writeLong(final long v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeShort(int)
+-   */
+-  @Override
+-  public void writeShort(final int v) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-  /**
+-   * @see java.io.DataOutput#writeUTF(java.lang.String)
+-   */
+-  @Override
+-  public void writeUTF(final String s) throws IOException {
+-    throw new UnsupportedOperationException();
+-  }
+-
+-}
+diff --git a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/package.html b/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/package.html
+deleted file mode 100644
+index 8cbb34e..0000000
+--- a/start/src/main/java/org/apache/accumulo/start/classloader/vfs/providers/package.html
++++ /dev/null
+@@ -1,19 +0,0 @@
+-<!--
+-    Licensed to the Apache Software Foundation (ASF) under one or more
+-    contributor license agreements.  See the NOTICE file distributed with
+-    this work for additional information regarding copyright ownership.
+-    The ASF licenses this file to You under the Apache License, Version 2.0
+-    (the "License"); you may not use this file except in compliance with
+-    the License.  You may obtain a copy of the License at
+-
+-         http://www.apache.org/licenses/LICENSE-2.0
+-
+-    Unless required by applicable law or agreed to in writing, software
+-    distributed under the License is distributed on an "AS IS" BASIS,
+-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-    See the License for the specific language governing permissions and
+-    limitations under the License.
+--->
+-<body>
+-<p>The HDFS File Provider</p>
+-</body>
+diff --git a/start/src/test/java/org/apache/accumulo/start/classloader/vfs/providers/ReadOnlyHdfsFileProviderTest.java b/start/src/test/java/org/apache/accumulo/start/classloader/vfs/providers/ReadOnlyHdfsFileProviderTest.java
+index b5cec83..5b69df9 100644
+--- a/start/src/test/java/org/apache/accumulo/start/classloader/vfs/providers/ReadOnlyHdfsFileProviderTest.java
++++ b/start/src/test/java/org/apache/accumulo/start/classloader/vfs/providers/ReadOnlyHdfsFileProviderTest.java
+@@ -24,6 +24,8 @@ import org.apache.commons.vfs2.FileObject;
+ import org.apache.commons.vfs2.FileSystemException;
+ import org.apache.commons.vfs2.FileType;
+ import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
++import org.apache.commons.vfs2.provider.hdfs.HdfsFileAttributes;
++import org.apache.commons.vfs2.provider.hdfs.HdfsFileProvider;
+ import org.apache.commons.vfs2.util.RandomAccessMode;
+ import org.apache.hadoop.fs.FileSystem;
+ import org.apache.hadoop.fs.Path;
+diff --git a/start/src/test/java/org/apache/accumulo/test/AccumuloDFSBase.java b/start/src/test/java/org/apache/accumulo/test/AccumuloDFSBase.java
+index feab493..343a3ee 100644
+--- a/start/src/test/java/org/apache/accumulo/test/AccumuloDFSBase.java
++++ b/start/src/test/java/org/apache/accumulo/test/AccumuloDFSBase.java
+@@ -21,7 +21,6 @@ import java.io.IOException;
+ import java.net.URI;
+ 
+ import org.apache.accumulo.start.classloader.vfs.MiniDFSUtil;
+-import org.apache.accumulo.start.classloader.vfs.providers.HdfsFileProvider;
+ import org.apache.commons.vfs2.CacheStrategy;
+ import org.apache.commons.vfs2.FileSystemException;
+ import org.apache.commons.vfs2.cache.DefaultFilesCache;
+@@ -29,6 +28,7 @@ import org.apache.commons.vfs2.cache.SoftRefFilesCache;
+ import org.apache.commons.vfs2.impl.DefaultFileReplicator;
+ import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
+ import org.apache.commons.vfs2.impl.FileContentInfoFilenameFactory;
++import org.apache.commons.vfs2.provider.hdfs.HdfsFileProvider;
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.hdfs.DFSConfigKeys;
+ import org.apache.hadoop.hdfs.MiniDFSCluster;
+-- 
+2.7.4
+

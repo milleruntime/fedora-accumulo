@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  4%{?dist}
+Release:  5%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -43,6 +43,12 @@ Patch3: native-code.patch
 Patch4: disabled-tests.patch
 # Patch upstream-provided example configuration for Fedora
 Patch5: default-conf.patch
+%if 0%{?fedora} > 24
+# Patch upstream ACCUMULO-3470 (update to commons-vfs 2.1)
+Patch6: ACCUMULO-3470.patch
+# disable missing vfs2 provider for HDFS (bz#1387110)
+Patch7: disable-hdfs-vfs2-provider.patch
+%endif
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -523,6 +529,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-5
+- Use commons-vfs 2.1 patch from upstream for f25+
+
 * Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-4
 - Fix whitespace in native patch for fuzz=0 opt in f25+
 
