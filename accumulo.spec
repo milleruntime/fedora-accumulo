@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  5%{?dist}
+Release:  6%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -350,10 +350,12 @@ install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib/ext
 assemble/bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
-for x in gc masters monitor slaves tracers %{name}-env.sh; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
+for x in gc masters monitor slaves tracers %{name}-env.sh generic_logger.xml generic_logger.properties monitor_logger.xml monitor_logger.properties; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
+cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/generic_logger.properties
+cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/monitor_logger.properties
 
 # main launcher
-%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
 # fixup the generated jpackage script
 sed -i -e 's/^#!\/bin\/sh$/#!\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
 # ensure the java configuration options know which service is being called
@@ -434,10 +436,8 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}.policy.example
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-site.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/auditLog.xml
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.properties
 %attr(0644, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/log4j.properties
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.properties
 
 %files server-base -f .mfiles-server-base
@@ -529,6 +529,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Fri Oct 28 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-6
+- fix classpath (bz#1389325) and log to console
+
 * Thu Oct 20 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-5
 - Use commons-vfs 2.1 patch from upstream for f25+
 
