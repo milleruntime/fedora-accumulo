@@ -1,0 +1,40 @@
+diff --git a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+index 9231c78..233fbae 100644
+--- a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
++++ b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+@@ -60,7 +60,6 @@ import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+ import org.apache.accumulo.core.conf.AccumuloConfiguration;
+ import org.apache.accumulo.core.conf.DefaultConfiguration;
+ import org.apache.accumulo.core.conf.Property;
+-import org.apache.accumulo.core.conf.SiteConfiguration;
+ import org.apache.accumulo.core.data.Key;
+ import org.apache.accumulo.core.data.Value;
+ import org.apache.accumulo.core.data.thrift.TConstraintViolationSummary;
+@@ -463,7 +462,8 @@ public class Shell extends ShellOptions {
+     if (instanceName == null) {
+       instanceName = clientConfig.get(ClientProperty.INSTANCE_NAME);
+     }
+-    AccumuloConfiguration conf = SiteConfiguration.getInstance(ServerConfigurationUtil.convertClientConfig(DefaultConfiguration.getInstance(), clientConfig));
++    // use ClientConfig since it should have everything we need
++    AccumuloConfiguration conf = ServerConfigurationUtil.convertClientConfig(DefaultConfiguration.getInstance(), clientConfig);
+     String keepers = getZooKeepers(keepersOption, clientConfig, conf);
+     if (instanceName == null) {
+       Path instanceDir = new Path(VolumeConfiguration.getVolumeUris(conf)[0], "instance_id");
+diff --git a/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java b/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
+index 2045eba..1b44a00 100644
+--- a/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
++++ b/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
+@@ -280,6 +280,13 @@ public class ShellOptionsJC {
+     if (useSsl()) {
+       clientConfig.setProperty(ClientProperty.INSTANCE_RPC_SSL_ENABLED, "true");
+     }
++    if (getZooKeeperInstance().size() > 0) {
++      List<String> zkOpts = getZooKeeperInstance();
++      String instanceName = zkOpts.get(0);
++      String hosts = zkOpts.get(1);
++      clientConfig.setProperty(ClientProperty.INSTANCE_ZK_HOST, hosts);
++      clientConfig.setProperty(ClientProperty.INSTANCE_NAME, instanceName);
++    }
+ 
+     // Automatically try to add in the proper ZK from accumulo-site for backwards compat.
+     if (!clientConfig.containsKey(ClientProperty.INSTANCE_ZK_HOST.getKey())) {

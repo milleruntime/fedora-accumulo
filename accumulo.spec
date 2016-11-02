@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  6%{?dist}
+Release:  7%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -49,6 +49,8 @@ Patch6: ACCUMULO-3470.patch
 # disable missing vfs2 provider for HDFS (bz#1387110)
 Patch7: disable-hdfs-vfs2-provider.patch
 %endif
+# Fix for Shell erroneously reading accumulo-site.xml
+Patch8: shell-not-read-conf.patch
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -529,6 +531,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Wed Nov 02 2016 Mike Miller <mmiller@apache.org> - 1.6.6-7
+- Fix for Shell erroneously reading accumulo-site.xml
+
 * Fri Oct 28 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-6
 - fix classpath (bz#1389325) and log to console
 
