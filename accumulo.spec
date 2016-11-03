@@ -9,7 +9,7 @@
 
 Name:     %{proj}
 Version:  1.6.6
-Release:  7%{?dist}
+Release:  8%{?dist}
 Summary:  A software platform for processing vast amounts of data
 License:  ASL 2.0
 Group:    Development/Libraries
@@ -46,11 +46,9 @@ Patch5: default-conf.patch
 %if 0%{?fedora} > 24
 # Patch upstream ACCUMULO-3470 (update to commons-vfs 2.1)
 Patch6: ACCUMULO-3470.patch
-# disable missing vfs2 provider for HDFS (bz#1387110)
-Patch7: disable-hdfs-vfs2-provider.patch
 %endif
 # Fix for Shell erroneously reading accumulo-site.xml
-Patch8: shell-not-read-conf.patch
+Patch7: shell-not-read-conf.patch
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -60,7 +58,11 @@ BuildRequires: apache-commons-io
 BuildRequires: apache-commons-lang
 BuildRequires: apache-commons-logging
 BuildRequires: apache-commons-math
-BuildRequires: apache-commons-vfs
+%if 0%{?fedora} > 24
+BuildRequires: apache-commons-vfs >= 2.1-7
+%else
+BuildRequires: apache-commons-vfs < 2.1
+%endif
 BuildRequires: beust-jcommander
 BuildRequires: bouncycastle
 BuildRequires: exec-maven-plugin
@@ -531,6 +533,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %endif
 
 %changelog
+* Thu Nov 03 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-8
+- Re-enable VFS 2.1 HDFS Provider (bz#1387110)
+
 * Wed Nov 02 2016 Mike Miller <mmiller@apache.org> - 1.6.6-7
 - Fix for Shell erroneously reading accumulo-site.xml
 
