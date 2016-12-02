@@ -1,36 +1,28 @@
 %global _hardened_build 1
-%global proj accumulo
 %global longproj Apache Accumulo
-# TODO monitor not included until dependent javascript libs are packaged
-%global include_monitor 0
 
 # jpackage main class
 %global main_class org.apache.%{name}.start.Main
 
-Name:     %{proj}
-Version:  1.6.6
-Release:  8%{?dist}
-Summary:  A software platform for processing vast amounts of data
-License:  ASL 2.0
-Group:    Development/Libraries
-URL:      https://%{name}.apache.org
-Source0:  https://www.apache.org/dist/%{name}/%{version}/%{name}-%{version}-src.tar.gz
+Name:    accumulo
+Version: 1.6.6
+Release: 9%{?dist}
+Summary: A software platform for processing vast amounts of data
+License: ASL 2.0
+Group:   Development/Libraries
+URL:     https://%{name}.apache.org
+Source0: https://www.apache.org/dist/%{name}/%{version}/%{name}-%{version}-src.tar.gz
 
 # systemd service files
-Source1:  %{name}-master.service
-Source2:  %{name}-tserver.service
-Source3:  %{name}-gc.service
-Source4:  %{name}-tracer.service
-%if %{include_monitor}
-Source5:  %{name}-monitor.service
-%endif
+Source1: %{name}-master.service
+Source2: %{name}-tserver.service
+Source3: %{name}-gc.service
+Source4: %{name}-tracer.service
+Source5: %{name}-monitor.service
 
 # Java configuration file for Fedora
 Source6: %{name}.conf
 
-# Upstream patches needed for Fedora
-
-# Should be applied after upstream patches
 # Use Jetty version 9 instead of 8
 Patch0: jetty9.patch
 # Use current version of commons-configuration
@@ -49,6 +41,10 @@ Patch6: ACCUMULO-3470.patch
 %endif
 # Fix for Shell erroneously reading accumulo-site.xml
 Patch7: shell-not-read-conf.patch
+# Fix for updating to flot 0.8 from 0.7 (adds flot.time)
+Patch8: flot8.patch
+# Workaround for https://github.com/jline/jline2/issues/205
+Patch9: jline-shell-workaround.patch
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -93,9 +89,7 @@ Requires: %{name}-core = %{version}-%{release}
 Requires: %{name}-master = %{version}-%{release}
 Requires: %{name}-tserver = %{version}-%{release}
 Requires: %{name}-gc = %{version}-%{release}
-%if %{include_monitor}
 Requires: %{name}-monitor = %{version}-%{release}
-%endif
 Requires: %{name}-tracer = %{version}-%{release}
 Requires: %{name}-examples = %{version}-%{release}
 Requires: %{name}-native%{?_isa} = %{version}-%{release}
@@ -127,7 +121,7 @@ This package provides libraries for %{longproj} clients.
 
 %package server-base
 Summary: The %{longproj} Server Base libraries
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -143,7 +137,7 @@ This package provides jars for other %{longproj} services.
 
 %package master
 Summary: The %{longproj} Master service
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -163,7 +157,7 @@ This package provides the master service for %{longproj}.
 
 %package tserver
 Summary: The %{longproj} TServer service
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -183,7 +177,7 @@ This package provides the tserver service for %{longproj}.
 
 %package gc
 Summary: The %{longproj} Garbage Collector service
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -201,11 +195,9 @@ modify key/value pairs at various points in the data management process.
 
 This package provides the gc service for %{longproj}.
 
-%if %{include_monitor}
 %package monitor
 Summary: The %{longproj} Monitor service
-# jquery and flot are MIT licensed, everything else is ASL 2.0
-License: ASL 2.0 and MIT
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -213,6 +205,8 @@ Requires: %{name}-server-base = %{version}-%{release}
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
+Requires: nodejs-flot
+Requires: js-jquery1
 
 %description monitor
   %{longproj} is a sorted, distributed key/value store based on Google's
@@ -222,11 +216,10 @@ cell-level access labels and a server-side programming mechanism that can
 modify key/value pairs at various points in the data management process.
 
 This package provides the monitor service for %{longproj}.
-%endif
 
 %package tracer
 Summary: The %{longproj} Tracer service
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -246,7 +239,7 @@ This package provides the tracer service for %{longproj}.
 
 %package examples
 Summary: Examples for %{longproj}
-License:  ASL 2.0
+License: ASL 2.0
 Group: Applications/System
 BuildArch: noarch
 Requires: %{name}-core = %{version}-%{release}
@@ -262,7 +255,7 @@ This package provides examples for %{longproj}.
 
 %package native
 Summary: Native libraries for %{longproj}
-License:  ASL 2.0
+License: ASL 2.0
 Group: Development/Libraries
 Requires: %{name}-tserver = %{version}-%{release}
 
@@ -277,6 +270,8 @@ This package provides native code for %{longproj}'s TServer.
 
 %prep
 %autosetup -p1
+# Remove flot and jquery bundling from upstream tarball
+rm -rf server/monitor/src/main/resources/web/flot/
 
 # Update dependency versions
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='jline']/pom:version" "2.10"
@@ -298,11 +293,8 @@ This package provides native code for %{longproj}'s TServer.
 %pom_disable_module maven-plugin
 %pom_disable_module docs
 %pom_disable_module assemble
-%if !%{include_monitor}
-# mini has dependency on monitor
+# Mini isn't needed
 %pom_disable_module minicluster
-%pom_disable_module server/monitor
-%endif
 
 # Remove unneeded plugins
 %pom_remove_plugin :maven-checkstyle-plugin
@@ -315,16 +307,13 @@ This package provides native code for %{longproj}'s TServer.
 %pom_remove_plugin :maven-java-formatter-plugin
 %pom_remove_plugin :modernizer-maven-plugin
 
-%if %{include_monitor}
-%mvn_package ":%{name}-minicluster" __noinstall
-%endif
+# Mini isn't needed
+#%%mvn_package ":%%{name}-minicluster" __noinstall
 %mvn_package ":%{name}-{project,core,fate,trace,start}" core
 %mvn_package ":%{name}-examples-simple" examples
 %mvn_package ":%{name}-gc" gc
 %mvn_package ":%{name}-master" master
-%if %{include_monitor}
 %mvn_package ":%{name}-monitor" monitor
-%endif
 %mvn_package ":%{name}-server-base" server-base
 %mvn_package ":%{name}-tracer" tracer
 %mvn_package ":%{name}-tserver" tserver
@@ -344,6 +333,11 @@ This package provides native code for %{longproj}'s TServer.
 %install
 %mvn_install
 
+# create symlink for system-provided web assets to be added to classpath
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/lib/web
+rm -f %{buildroot}%{_datadir}/%{name}/lib/web/flot
+ln -s %{_usr}/lib/node_modules/flot %{buildroot}%{_datadir}/%{name}/lib/web/flot
+
 # native libs
 install -d -m 755 %{buildroot}%{_libdir}/%{name}
 install -d -m 755 %{buildroot}%{_var}/cache/%{name}
@@ -359,7 +353,7 @@ cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir
 cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/monitor_logger.properties
 
 # main launcher
-%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
 # fixup the generated jpackage script
 sed -i -e 's/^#!\/bin\/sh$/#!\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
 # ensure the java configuration options know which service is being called
@@ -387,13 +381,10 @@ exec "\${JAVACMD}" "\${FLAGS[@]}" -classpath "\${CLASSPATH}" \\
 EOF
 
 # scripts for services/utilities
-%if %{include_monitor}
-for service in master tserver shell init admin gc monitor tracer classpath version rfile-info login-info zookeeper create-token info jar; do
-%else
 for service in master tserver shell init admin gc tracer classpath version rfile-info login-info zookeeper create-token info jar; do
-%endif
   cat <<EOF >"%{name}-$service"
 #! /usr/bin/bash
+echo "%{name}-$service script is deprecated. Use '%{name} $service' instead." 1>&2
 %{_bindir}/%{name} $service "\$@"
 EOF
   install -p -m 755 %{name}-$service %{buildroot}%{_bindir}
@@ -405,9 +396,7 @@ install -p -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/%{name}-master.service
 install -p -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/%{name}-tserver.service
 install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/%{name}-gc.service
 install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/%{name}-tracer.service
-%if %{include_monitor}
 install -p -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/%{name}-monitor.service
-%endif
 
 # java configuration file for Fedora
 install -d -m 755 %{buildroot}%{_javaconfdir}
@@ -421,6 +410,8 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %doc NOTICE
 %dir %{_javadir}/%{name}
 %dir %{_mavenpomdir}/%{name}
+%dir %{_datadir}/%{name}
+%dir %{_datadir}/%{name}/lib
 %{_bindir}/%{name}
 %{_bindir}/%{name}-shell
 %{_bindir}/%{name}-classpath
@@ -461,11 +452,10 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %{_bindir}/%{name}-gc
 %{_unitdir}/%{name}-gc.service
 
-%if %{include_monitor}
 %files monitor -f .mfiles-monitor
-%{_bindir}/%{name}-monitor
+%dir %{_datadir}/%{name}/lib/web
+%{_datadir}/%{name}/lib/web/flot
 %{_unitdir}/%{name}-monitor.service
-%endif
 
 %files tracer -f .mfiles-tracer
 %{_bindir}/%{name}-tracer
@@ -489,10 +479,8 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %preun tracer
 %systemd_preun %{name}-tracer.service
 
-%if %{include_monitor}
 %preun monitor
 %systemd_preun %{name}-monitor.service
-%endif
 
 %postun master
 %systemd_postun_with_restart %{name}-master.service
@@ -506,10 +494,8 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %postun tracer
 %systemd_postun_with_restart %{name}-tracer.service
 
-%if %{include_monitor}
 %postun monitor
 %systemd_postun_with_restart %{name}-monitor.service
-%endif
 
 %pre core
 getent group %{name} >/dev/null || /usr/sbin/groupadd -r %{name}
@@ -527,12 +513,13 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %post tracer
 %systemd_post %{name}-tracer.service
 
-%if %{include_monitor}
 %post monitor
 %systemd_post %{name}-monitor.service
-%endif
 
 %changelog
+* Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-9
+- Include Monitor (bz#1132725)
+
 * Thu Nov 03 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-8
 - Re-enable VFS 2.1 HDFS Provider (bz#1387110)
 

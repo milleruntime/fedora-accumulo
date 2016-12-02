@@ -1,0 +1,27 @@
+diff --git a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+index 9231c78..0336a67 100644
+--- a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
++++ b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+@@ -646,9 +646,10 @@ public class Shell extends ShellOptions {
+   }
+ 
+   public void printInfo() throws IOException {
+-    reader.print("\n" + SHELL_DESCRIPTION + "\n" + "- \n" + "- version: " + Constants.VERSION + "\n" + "- instance name: "
++    writer.print("\n" + SHELL_DESCRIPTION + "\n" + "- \n" + "- version: " + Constants.VERSION + "\n" + "- instance name: "
+         + connector.getInstance().getInstanceName() + "\n" + "- instance id: " + connector.getInstance().getInstanceID() + "\n" + "- \n"
+         + "- type 'help' for a list of available commands\n" + "- \n");
++    writer.flush();
+     reader.flush();
+   }
+ 
+@@ -676,7 +677,9 @@ public class Shell extends ShellOptions {
+       }
+     }
+     sb.append("-\n");
+-    reader.print(sb.toString());
++    writer.print(sb.toString());
++    writer.flush();
++    reader.flush();
+   }
+ 
+   public String getDefaultPrompt() {

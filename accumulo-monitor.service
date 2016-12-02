@@ -1,11 +1,11 @@
 [Unit]
-Description=Apache Accumulo TServer service
+Description=Apache Accumulo Monitor service
 After=syslog.target network.target
 
 [Service]
 User=accumulo
 Group=accumulo
-ExecStart=/usr/bin/accumulo tserver
+ExecStart=/usr/bin/accumulo monitor
 
 [Install]
 WantedBy=multi-user.target

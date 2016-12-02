@@ -1,0 +1,12 @@
+diff --git a/server/monitor/src/main/java/org/apache/accumulo/monitor/servlets/BasicServlet.java b/server/monitor/src/main/java/org/apache/accumulo/monitor/servlets/BasicServlet.java
+index 75d5436..9660340 100644
+--- a/server/monitor/src/main/java/org/apache/accumulo/monitor/servlets/BasicServlet.java
++++ b/server/monitor/src/main/java/org/apache/accumulo/monitor/servlets/BasicServlet.java
+@@ -156,6 +156,7 @@ abstract public class BasicServlet extends HttpServlet {
+     sb.append("<!--[if lte IE 8]><script language=\"javascript\" type=\"text/javascript\" src=\"/web/flot/excanvas.min.js\"></script><![endif]-->\n");
+     sb.append("<script language=\"javascript\" type=\"text/javascript\" src=\"/web/flot/jquery.js\"></script>\n");
+     sb.append("<script language=\"javascript\" type=\"text/javascript\" src=\"/web/flot/jquery.flot.js\"></script>\n");
++    sb.append("<script language=\"javascript\" type=\"text/javascript\" src=\"/web/flot/jquery.flot.time.js\"></script>\n");
+ 
+     sb.append("</head>\n");
+ 
