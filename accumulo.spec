@@ -6,7 +6,7 @@
 
 Name:    accumulo
 Version: 1.6.6
-Release: 9%{?dist}
+Release: 10%{?dist}
 Summary: A software platform for processing vast amounts of data
 License: ASL 2.0
 Group:   Development/Libraries
@@ -353,7 +353,7 @@ cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir
 cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/monitor_logger.properties
 
 # main launcher
-%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:google-gson:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
 # fixup the generated jpackage script
 sed -i -e 's/^#!\/bin\/sh$/#!\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
 # ensure the java configuration options know which service is being called
@@ -517,6 +517,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %systemd_post %{name}-monitor.service
 
 %changelog
+* Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-10
+- Add google-gson to classpath for monitor REST service
+
 * Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-9
 - Include Monitor (bz#1132725)
 
