@@ -6,7 +6,7 @@
 
 Name:    accumulo
 Version: 1.6.6
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: A software platform for processing vast amounts of data
 License: ASL 2.0
 Group:   Development/Libraries
@@ -348,42 +348,43 @@ install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}/lib/ext
 assemble/bin/bootstrap_config.sh -o -d %{buildroot}%{_sysconfdir}/%{name} -s 3GB -n -v 2
-for x in gc masters monitor slaves tracers %{name}-env.sh generic_logger.xml generic_logger.properties monitor_logger.xml monitor_logger.properties; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
+for x in gc masters monitor slaves tracers %{name}-env.sh generic_logger.xml generic_logger.properties monitor_logger.xml monitor_logger.properties %{name}.policy.example; do rm -f %{buildroot}%{_sysconfdir}/%{name}/$x; done
 cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/generic_logger.properties
 cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/monitor_logger.properties
 
 # main launcher
-%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:google-gson:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:avro/avro:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:google-gson:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper %{name} true
 # fixup the generated jpackage script
-sed -i -e 's/^#!\/bin\/sh$/#!\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
+sed -i -e 's/^#!\/bin\/sh$/#!\/usr\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
 # ensure the java configuration options know which service is being called
-sed -i -e 's/^\s*\.\s\s*\/etc\/java\/'%{name}'\.conf/& \$1/' %{buildroot}%{_bindir}/%{name}
-sed -i -e 's/^\s*\.\s\s*\$HOME\/\.'%{name}'rc$/& \$1/' %{buildroot}%{_bindir}/%{name}
+sed -i -e 's/^\s*\.\s\s*\/etc\/java\/'%{name}'\.conf/& "\$1"/' %{buildroot}%{_bindir}/%{name}
+sed -i -e 's/^\s*\.\s\s*\$HOME\/\.'%{name}'rc$/& "\$1"/' %{buildroot}%{_bindir}/%{name}
 # options may have spaces in them, so replace run with an exec that properly
 # parses arguments as arrays.
 sed -i -e '/^run .*$/d' %{buildroot}%{_bindir}/%{name}
 sed -i -e '/^set_flags .*$/d' %{buildroot}%{_bindir}/%{name}
 sed -i -e '/^set_options .*$/d' %{buildroot}%{_bindir}/%{name}
 cat <<EOF >>%{buildroot}%{_bindir}/%{name}
+CLASSPATH="%{_sysconfdir}/%{name}:%{_datadir}/%{name}/lib/:\${CLASSPATH}"
 set_javacmd
 
 if [ -n "\${VERBOSE}" ]; then
   echo "Java virtual machine used: \${JAVACMD}"
   echo "classpath used: \${CLASSPATH}"
   echo "main class used: \${MAIN_CLASS}"
-  echo "flags used: \${FLAGS[@]}"
-  echo "options used: \${ACCUMULO_OPTS[@]}"
-  echo "arguments used: \${@}"
+  echo "flags used: \${FLAGS[*]}"
+  echo "options used: \${ACCUMULO_OPTS[*]}"
+  echo "arguments used: \${*}"
 fi
 
-exec "\${JAVACMD}" "\${FLAGS[@]}" -classpath "\${CLASSPATH}" \\
-  "\${ACCUMULO_OPTS[@]}" "\${MAIN_CLASS}" "\${@}"
+export CLASSPATH
+exec "\${JAVACMD}" "\${FLAGS[@]}" "\${ACCUMULO_OPTS[@]}" "\${MAIN_CLASS}" "\${@}"
 EOF
 
 # scripts for services/utilities
 for service in master tserver shell init admin gc tracer classpath version rfile-info login-info zookeeper create-token info jar; do
   cat <<EOF >"%{name}-$service"
-#! /usr/bin/bash
+#!/usr/bin/bash
 echo "%{name}-$service script is deprecated. Use '%{name} $service' instead." 1>&2
 %{_bindir}/%{name} $service "\$@"
 EOF
@@ -428,7 +429,6 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %attr(0755, %{name}, -) %dir %{_sysconfdir}/%{name}/lib/ext
 %attr(0755, %{name}, -) %config(noreplace) %{_javaconfdir}/%{name}.conf
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-metrics.xml
-%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}.policy.example
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/%{name}-site.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/auditLog.xml
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.properties
@@ -517,6 +517,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %systemd_post %{name}-monitor.service
 
 %changelog
+* Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-11
+- Vastly simplify out-of-box configuration and fix missing avro jar
+
 * Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-10
 - Add google-gson to classpath for monitor REST service
 
