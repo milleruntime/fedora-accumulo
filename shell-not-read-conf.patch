@@ -21,10 +21,10 @@ index 9231c78..233fbae 100644
      if (instanceName == null) {
        Path instanceDir = new Path(VolumeConfiguration.getVolumeUris(conf)[0], "instance_id");
 diff --git a/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java b/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
-index 2045eba..1b44a00 100644
+index 2045eba..30b3e1e 100644
 --- a/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
 +++ b/core/src/main/java/org/apache/accumulo/core/util/shell/ShellOptionsJC.java
-@@ -280,6 +280,13 @@ public class ShellOptionsJC {
+@@ -280,7 +280,20 @@ public class ShellOptionsJC {
      if (useSsl()) {
        clientConfig.setProperty(ClientProperty.INSTANCE_RPC_SSL_ENABLED, "true");
      }
@@ -36,5 +36,12 @@ index 2045eba..1b44a00 100644
 +      clientConfig.setProperty(ClientProperty.INSTANCE_NAME, instanceName);
 +    }
  
++    if (zooKeeperInstanceName != null && !getZooKeeperInstanceName().isEmpty()) {
++      clientConfig.setProperty(ClientProperty.INSTANCE_NAME, getZooKeeperInstanceName());
++    }
++    if (zooKeeperHosts != null && !getZooKeeperHosts().isEmpty()) {
++      clientConfig.setProperty(ClientProperty.INSTANCE_ZK_HOST, getZooKeeperHosts());
++    }
      // Automatically try to add in the proper ZK from accumulo-site for backwards compat.
      if (!clientConfig.containsKey(ClientProperty.INSTANCE_ZK_HOST.getKey())) {
+       AccumuloConfiguration siteConf = SiteConfiguration.getInstance(ServerConfigurationUtil.convertClientConfig(DefaultConfiguration.getInstance(),

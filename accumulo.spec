@@ -6,7 +6,7 @@
 
 Name:    accumulo
 Version: 1.6.6
-Release: 11%{?dist}
+Release: 12%{?dist}
 Summary: A software platform for processing vast amounts of data
 License: ASL 2.0
 Group:   Development/Libraries
@@ -517,6 +517,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %systemd_post %{name}-monitor.service
 
 %changelog
+* Mon Dec 05 2016 Mike Miller <milleruntime@fedoraproject.org> - 1.6.6-12
+- Another fix for Shell erroneously reading accumulo-site.xml
+
 * Fri Dec 02 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-11
 - Vastly simplify out-of-box configuration and fix missing avro jar
 
