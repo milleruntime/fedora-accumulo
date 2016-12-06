@@ -88,7 +88,7 @@ index 7fe3fe4..a9e29e1 100644
 -      $HADOOP_PREFIX/lib/(?!slf4j)[^.].*.jar,
 -      <!-- End Hadoop 1 requirements -->
 -    </value>
-+    <value>/etc/accumulo/lib</value>
++    <value>/etc/accumulo/lib,/etc/hadoop</value>
      <description>Classpaths that accumulo checks for updates and class files.</description>
    </property>
 +

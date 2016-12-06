@@ -6,6 +6,7 @@ After=syslog.target network.target
 User=accumulo
 Group=accumulo
 ExecStart=/usr/bin/accumulo master
+SuccessExitStatus=143
 
 [Install]
 WantedBy=multi-user.target
