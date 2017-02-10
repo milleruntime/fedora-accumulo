@@ -6,7 +6,7 @@
 
 Name:    accumulo
 Version: 1.6.6
-Release: 13%{?dist}
+Release: 14%{?dist}
 Summary: A software platform for processing vast amounts of data
 License: ASL 2.0
 Group:   Development/Libraries
@@ -517,6 +517,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %systemd_post %{name}-monitor.service
 
 %changelog
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.6.6-14
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Tue Dec 06 2016 Christopher Tubbs <ctubbsii@fedoraproject.org> - 1.6.6-13
 - Fix missing protobuf-java and hadoop config classpath bug, and systemd exit
   code problems
