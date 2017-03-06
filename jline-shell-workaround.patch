@@ -1,7 +1,7 @@
-diff --git a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+diff --git a/shell/src/main/java/org/apache/accumulo/shell/Shell.java b/shell/src/main/java/org/apache/accumulo/shell/Shell.java
 index 9231c78..0336a67 100644
---- a/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
-+++ b/core/src/main/java/org/apache/accumulo/core/util/shell/Shell.java
+--- a/shell/src/main/java/org/apache/accumulo/shell/Shell.java
++++ b/shell/src/main/java/org/apache/accumulo/shell/Shell.java
 @@ -646,9 +646,10 @@ public class Shell extends ShellOptions {
    }
  

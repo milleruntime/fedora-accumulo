@@ -16,32 +16,16 @@ diff --git a/assemble/conf/templates/accumulo-site.xml b/assemble/conf/templates
 index 7fe3fe4..a9e29e1 100644
 --- a/assemble/conf/templates/accumulo-site.xml
 +++ b/assemble/conf/templates/accumulo-site.xml
-@@ -22,18 +22,15 @@
-     you are simply testing at your workstation, you will most definitely need to change the three entries below. -->
+@@ -23,7 +23,7 @@
  
    <property>
--    <name>instance.zookeeper.host</name>
--    <value>localhost:2181</value>
--    <description>comma separated list of zookeeper servers</description>
-+    <name>instance.volumes</name>
+     <name>instance.volumes</name>
+-    <value></value>
 +    <value>file:///tmp/accumulo</value>
-+    <description>comma separated list of dfs URIs</description>
+     <description>comma separated list of URIs for volumes. example: hdfs://localhost:9000/accumulo</description>
    </property>
  
-   <property>
--    <name>logger.dir.walog</name>
--    <value>walogs</value>
--    <description>The property only needs to be set if upgrading from 1.4 which used to store write-ahead logs on the local
--      filesystem. In 1.5 write-ahead logs are stored in DFS.  When 1.5 is started for the first time it will copy any 1.4
--      write ahead logs into DFS.  It is possible to specify a comma-separated list of directories.
--    </description>
-+    <name>instance.zookeeper.host</name>
-+    <value>localhost:2181</value>
-+    <description>comma separated list of zookeeper servers</description>
-   </property>
- 
-   <property>
-@@ -89,49 +86,13 @@
+@@ -123,54 +123,13 @@
  ${mvnProjBaseDir}
    <property>
      <name>general.classpaths</name>
@@ -83,18 +67,23 @@ index 7fe3fe4..a9e29e1 100644
 -      /usr/hdp/current/hadoop-yarn-client/lib/jersey.*.jar,
 -      /usr/hdp/current/hive-client/lib/hive-accumulo-handler.jar
 -      <!-- End HDP 2.2 requirements -->
--      <!-- Hadoop 1 requirements -->
--      $HADOOP_PREFIX/[^.].*.jar,
--      $HADOOP_PREFIX/lib/(?!slf4j)[^.].*.jar,
--      <!-- End Hadoop 1 requirements -->
+-      <!-- IOP 4.1 requirements -->
+-      /usr/iop/current/hadoop-client/[^.].*.jar,
+-      /usr/iop/current/hadoop-client/lib/(?!slf4j)[^.].*.jar,
+-      /usr/iop/current/hadoop-hdfs-client/[^.].*.jar,
+-      /usr/iop/current/hadoop-mapreduce-client/[^.].*.jar,
+-      /usr/iop/current/hadoop-yarn-client/[^.].*.jar,
+-      /usr/iop/current/hadoop-yarn-client/lib/jersey.*.jar,
+-      /usr/iop/current/hive-client/lib/hive-accumulo-handler.jar
+-      <!-- End IOP 4.1 requirements -->
 -    </value>
 +    <value>/etc/accumulo/lib,/etc/hadoop</value>
      <description>Classpaths that accumulo checks for updates and class files.</description>
    </property>
-+
 +  <property>
 +    <name>general.dynamic.classpaths</name>
 +    <value>/etc/accumulo/lib/ext</value>
 +    <description>Classpaths that accumulo checks for updates and class files to dynamically load.</description>
 +  </property>
++
  </configuration>

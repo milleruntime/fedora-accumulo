@@ -5,8 +5,8 @@
 %global main_class org.apache.%{name}.start.Main
 
 Name:    accumulo
-Version: 1.6.6
-Release: 14%{?dist}
+Version: 1.8.1
+Release: 1%{?dist}
 Summary: A software platform for processing vast amounts of data
 License: ASL 2.0
 Group:   Development/Libraries
@@ -24,27 +24,29 @@ Source5: %{name}-monitor.service
 Source6: %{name}.conf
 
 # Use Jetty version 9 instead of 8
-Patch0: jetty9.patch
+#Patch0: jetty9.patch
 # Use current version of commons-configuration
-Patch1: commons-configuration.patch
+#Patch1: commons-configuration.patch
 # Use current version of commons-math
-Patch2: commons-math.patch
+#Patch2: commons-math.patch
 # Apply Fedora JNI conventions
 Patch3: native-code.patch
 # Disable broken tests
-Patch4: disabled-tests.patch
+#Patch4: disabled-tests.patch
 # Patch upstream-provided example configuration for Fedora
 Patch5: default-conf.patch
-%if 0%{?fedora} > 24
 # Patch upstream ACCUMULO-3470 (update to commons-vfs 2.1)
-Patch6: ACCUMULO-3470.patch
-%endif
+#Patch6: ACCUMULO-3470.patch
 # Fix for Shell erroneously reading accumulo-site.xml
-Patch7: shell-not-read-conf.patch
+#Patch7: shell-not-read-conf.patch
 # Fix for updating to flot 0.8 from 0.7 (adds flot.time)
 Patch8: flot8.patch
 # Workaround for https://github.com/jline/jline2/issues/205
-Patch9: jline-shell-workaround.patch
+#Patch9: jline-shell-workaround.patch
+# Fix version number in thrift script
+Patch10: thrift-0.10.0.patch
+# Fix differences with guava version
+Patch11: guava.patch
 
 BuildRequires: apache-commons-cli
 BuildRequires: apache-commons-codec
@@ -59,6 +61,7 @@ BuildRequires: apache-commons-vfs >= 2.1-7
 %else
 BuildRequires: apache-commons-vfs < 2.1
 %endif
+BuildRequires: auto-service
 BuildRequires: beust-jcommander
 BuildRequires: bouncycastle
 BuildRequires: exec-maven-plugin
@@ -83,6 +86,7 @@ BuildRequires: powermock-core
 BuildRequires: powermock-junit4
 BuildRequires: slf4j
 BuildRequires: systemd-units
+BuildRequires: thrift
 BuildRequires: zookeeper-java
 
 Requires: %{name}-core = %{version}-%{release}
@@ -268,6 +272,22 @@ modify key/value pairs at various points in the data management process.
 
 This package provides native code for %{longproj}'s TServer.
 
+%package shell
+Summary: Shell for %{longproj}
+License: ASL 2.0
+Group: Development/Libraries
+Requires: %{name}-core = %{version}-%{release}
+Requires: %{name}-tserver = %{version}-%{release}
+
+%description shell
+  %{longproj} is a sorted, distributed key/value store based on Google's
+BigTable design. It is built on top of Apache Hadoop, Zookeeper, and Thrift. It
+features a few novel improvements on the BigTable design in the form of
+cell-level access labels and a server-side programming mechanism that can
+modify key/value pairs at various points in the data management process.
+
+This package provides the shell service for %{longproj}.
+
 %prep
 %autosetup -p1
 # Remove flot and jquery bundling from upstream tarball
@@ -276,11 +296,8 @@ rm -rf server/monitor/src/main/resources/web/flot/
 # Update dependency versions
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='jline']/pom:version" "2.10"
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='zookeeper']/pom:version" "3.4.5"
-%pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='libthrift']/pom:version" "0.9.1"
+%pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='libthrift']/pom:version" "0.10.0"
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='log4j']/pom:version" "1.2.17"
-%pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:version" "3.2"
-%pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3"
-%pom_xpath_set "pom:project/pom:dependencies/pom:dependency[pom:artifactId='commons-math']/pom:artifactId" "commons-math3" core
 %pom_xpath_set "pom:project/pom:dependencyManagement/pom:dependencies/pom:dependency[pom:artifactId='bcprov-jdk15on']/pom:artifactId" "bcprov-jdk16"
 
 # Remove enforcer animal-sniffer rule
@@ -295,6 +312,7 @@ rm -rf server/monitor/src/main/resources/web/flot/
 %pom_disable_module assemble
 # Mini isn't needed
 %pom_disable_module minicluster
+%pom_disable_module iterator-test-harness
 
 # Remove unneeded plugins
 %pom_remove_plugin :maven-checkstyle-plugin
@@ -306,6 +324,7 @@ rm -rf server/monitor/src/main/resources/web/flot/
 %pom_remove_plugin :findbugs-maven-plugin
 %pom_remove_plugin :maven-java-formatter-plugin
 %pom_remove_plugin :modernizer-maven-plugin
+%pom_remove_plugin :apilyzer-maven-plugin core
 
 # Mini isn't needed
 #%%mvn_package ":%%{name}-minicluster" __noinstall
@@ -317,6 +336,7 @@ rm -rf server/monitor/src/main/resources/web/flot/
 %mvn_package ":%{name}-server-base" server-base
 %mvn_package ":%{name}-tracer" tracer
 %mvn_package ":%{name}-tserver" tserver
+%mvn_package ":%{name}-shell" shell
 
 # build native, but skip install; JNI *.so is copied manually
 %mvn_package ":%{name}-native" __noinstall
@@ -328,7 +348,7 @@ rm -rf server/monitor/src/main/resources/web/flot/
 # especially in the start jar. These should be enabled when possible.
 # ITs are skipped, because they time out frequently and take too many resources
 # to run reliably. Failures do not reliably indicate meaningful issues.
-%mvn_build -j -- -DforkCount=1C -DskipTests -DskipITs
+%mvn_build -j -- -Pthrift -DforkCount=1C -DskipTests -DskipITs
 
 %install
 %mvn_install
@@ -404,11 +424,11 @@ install -d -m 755 %{buildroot}%{_javaconfdir}
 install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 
 %files
+%doc LICENSE
+%doc README.md
+%doc NOTICE
 
 %files core -f .mfiles-core
-%doc LICENSE
-%doc README
-%doc NOTICE
 %dir %{_javadir}/%{name}
 %dir %{_mavenpomdir}/%{name}
 %dir %{_datadir}/%{name}
@@ -434,6 +454,9 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/generic_logger.properties
 %attr(0644, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/log4j.properties
 %attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/monitor_logger.properties
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/client.conf
+%attr(0640, %{name}, -) %config(noreplace) %{_sysconfdir}/%{name}/hadoop-metrics2-accumulo.properties
+
 
 %files server-base -f .mfiles-server-base
 %{_bindir}/%{name}-init
@@ -462,6 +485,8 @@ install -p -m 755 %{SOURCE6} %{buildroot}%{_javaconfdir}/%{name}.conf
 %{_unitdir}/%{name}-tracer.service
 
 %files examples -f .mfiles-examples
+
+%files shell -f .mfiles-shell
 
 %files native
 %dir %{_libdir}/%{name}
@@ -517,6 +542,9 @@ getent passwd %{name} >/dev/null || /usr/sbin/useradd --comment "%{longproj}" --
 %systemd_post %{name}-monitor.service
 
 %changelog
+* Wed Mar 15 2017 Mike Miller <mmiller@apache.org> - 1.8.1-1
+- Update to 1.8.1
+
 * Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.6.6-14
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 

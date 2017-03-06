@@ -1,7 +1,7 @@
-diff --git a/core/src/test/java/org/apache/accumulo/core/util/shell/ShellSetInstanceTest.java b/core/src/test/java/org/apache/accumulo/core/util/shell/ShellSetInstanceTest.java
+diff --git a/shell/src/test/java/org/apache/accumulo/shell/ShellSetInstanceTest.java b/shell/src/test/java/org/apache/accumulo/shell/ShellSetInstanceTest.java
 index 0453beb..84e4ad9 100644
---- a/core/src/test/java/org/apache/accumulo/core/util/shell/ShellSetInstanceTest.java
-+++ b/core/src/test/java/org/apache/accumulo/core/util/shell/ShellSetInstanceTest.java
+--- a/shell/src/test/java/org/apache/accumulo/shell/ShellSetInstanceTest.java
++++ b/shell/src/test/java/org/apache/accumulo/shell/ShellSetInstanceTest.java
 @@ -53,6 +53,7 @@ import org.junit.After;
  import org.junit.AfterClass;
  import org.junit.Before;
@@ -18,10 +18,10 @@ index 0453beb..84e4ad9 100644
  public class ShellSetInstanceTest {
    public static class TestOutputStream extends OutputStream {
      StringBuilder sb = new StringBuilder();
-diff --git a/core/src/test/java/org/apache/accumulo/core/util/shell/commands/HistoryCommandTest.java b/core/src/test/java/org/apache/accumulo/core/util/shell/commands/HistoryCommandTest.java
+diff --git a/shell/src/test/java/org/apache/accumulo/shell/commands/HistoryCommandTest.java b/shell/src/test/java/org/apache/accumulo/shell/commands/HistoryCommandTest.java
 index 9b98e4a..696a090 100644
---- a/core/src/test/java/org/apache/accumulo/core/util/shell/commands/HistoryCommandTest.java
-+++ b/core/src/test/java/org/apache/accumulo/core/util/shell/commands/HistoryCommandTest.java
+--- a/shell/src/test/java/org/apache/accumulo/shell/commands/HistoryCommandTest.java
++++ b/shell/src/test/java/org/apache/accumulo/shell/commands/HistoryCommandTest.java
 @@ -33,6 +33,7 @@ import org.apache.accumulo.core.util.shell.Shell;
  import org.apache.commons.cli.CommandLine;
  import org.junit.Assume;
