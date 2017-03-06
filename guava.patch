@@ -1,0 +1,52 @@
+diff --git a/core/src/main/java/org/apache/accumulo/core/sample/impl/DataoutputHasher.java b/core/src/main/java/org/apache/accumulo/core/sample/impl/DataoutputHasher.java
+index d243dfe..35a18e2 100644
+--- a/core/src/main/java/org/apache/accumulo/core/sample/impl/DataoutputHasher.java
++++ b/core/src/main/java/org/apache/accumulo/core/sample/impl/DataoutputHasher.java
+@@ -96,7 +96,7 @@ public class DataoutputHasher implements DataOutput {
+ 
+   @Override
+   public void writeChars(String s) throws IOException {
+-    hasher.putString(s);
++    hasher.putString(s, StandardCharsets.UTF_8);
+ 
+   }
+ 
+diff --git a/server/gc/src/main/java/org/apache/accumulo/gc/replication/CloseWriteAheadLogReferences.java b/server/gc/src/main/java/org/apache/accumulo/gc/replication/CloseWriteAheadLogReferences.java
+index 0c09396..c95f375 100644
+--- a/server/gc/src/main/java/org/apache/accumulo/gc/replication/CloseWriteAheadLogReferences.java
++++ b/server/gc/src/main/java/org/apache/accumulo/gc/replication/CloseWriteAheadLogReferences.java
+@@ -84,7 +84,7 @@ public class CloseWriteAheadLogReferences implements Runnable {
+   public void run() {
+     // As long as we depend on a newer Guava than Hadoop uses, we have to make sure we're compatible with
+     // what the version they bundle uses.
+-    Stopwatch sw = new Stopwatch();
++    Stopwatch sw = Stopwatch.createUnstarted();
+ 
+     Connector conn;
+     try {
+diff --git a/server/master/src/main/java/org/apache/accumulo/master/replication/RemoveCompleteReplicationRecords.java b/server/master/src/main/java/org/apache/accumulo/master/replication/RemoveCompleteReplicationRecords.java
+index e286371..ef082b9 100644
+--- a/server/master/src/main/java/org/apache/accumulo/master/replication/RemoveCompleteReplicationRecords.java
++++ b/server/master/src/main/java/org/apache/accumulo/master/replication/RemoveCompleteReplicationRecords.java
+@@ -83,7 +83,7 @@ public class RemoveCompleteReplicationRecords implements Runnable {
+     WorkSection.limit(bs);
+     bs.addScanIterator(cfg);
+ 
+-    Stopwatch sw = new Stopwatch();
++    Stopwatch sw = Stopwatch.createUnstarted();
+     long recordsRemoved = 0;
+     try {
+       sw.start();
+diff --git a/test/src/main/java/org/apache/accumulo/test/functional/ScannerIT.java b/test/src/main/java/org/apache/accumulo/test/functional/ScannerIT.java
+index 340a58e..b0ef0a7 100644
+--- a/test/src/main/java/org/apache/accumulo/test/functional/ScannerIT.java
++++ b/test/src/main/java/org/apache/accumulo/test/functional/ScannerIT.java
+@@ -75,7 +75,7 @@ public class ScannerIT extends AccumuloClusterHarness {
+     s.setBatchSize(1);
+     s.setRange(new Range());
+ 
+-    Stopwatch sw = new Stopwatch();
++    Stopwatch sw = Stopwatch.createUnstarted();
+     Iterator<Entry<Key,Value>> iterator = s.iterator();
+ 
+     sw.start();

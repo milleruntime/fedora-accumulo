@@ -15,12 +15,12 @@ diff --git a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.
 index f728a9b..4a056f0 100644
 --- a/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
 +++ b/server/tserver/src/main/java/org/apache/accumulo/tserver/NativeMap.java
-@@ -62,7 +62,7 @@ public class NativeMap implements Iterable<Map.Entry<Key,Value>> {
+@@ -69,7 +69,7 @@ public class NativeMap implements Iterable<Map.Entry<Key,Value>> {
    // Load native library
    static {
      // Check standard directories
--    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64"), new File("/usr/lib")}));
-+    List<File> directories = new ArrayList<File>(Arrays.asList(new File[] {new File("/usr/lib64/accumulo"), new File("/usr/lib/accumulo")}));
+-    List<File> directories = new ArrayList<>(Arrays.asList(new File[] {new File("/usr/lib64"), new File("/usr/lib")}));
++    List<File> directories = new ArrayList<>(Arrays.asList(new File[] {new File("/usr/lib64/accumulo"), new File("/usr/lib/accumulo")}));
      // Check in ACCUMULO_HOME location, too
      String envAccumuloHome = System.getenv("ACCUMULO_HOME");
      if (envAccumuloHome != null) {

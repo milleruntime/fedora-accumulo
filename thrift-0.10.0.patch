@@ -1,0 +1,26 @@
+diff --git a/core/src/main/scripts/generate-thrift.sh b/core/src/main/scripts/generate-thrift.sh
+index 691ea79..a149fd6 100755
+--- a/core/src/main/scripts/generate-thrift.sh
++++ b/core/src/main/scripts/generate-thrift.sh
+@@ -26,7 +26,7 @@
+ #   INCLUDED_MODULES should be an array that includes other Maven modules with src/main/thrift directories
+ #   Use INCLUDED_MODULES=(-) in calling scripts that require no other modules
+ # ========================================================================================================================
+-[[ -z $REQUIRED_THRIFT_VERSION ]] && REQUIRED_THRIFT_VERSION='0.9.3'
++[[ -z $REQUIRED_THRIFT_VERSION ]] && REQUIRED_THRIFT_VERSION='0.10.0'
+ [[ -z $INCLUDED_MODULES ]]        && INCLUDED_MODULES=(../server/tracer)
+ [[ -z $BASE_OUTPUT_PACKAGE ]]     && BASE_OUTPUT_PACKAGE='org.apache.accumulo.core'
+ [[ -z $PACKAGES_TO_GENERATE ]]    && PACKAGES_TO_GENERATE=(gc master tabletserver security client.impl data replication trace)
+diff --git a/server/base/src/test/java/org/apache/accumulo/server/rpc/RpcWrapperTest.java b/server/base/src/test/java/org/apache/accumulo/server/rpc/RpcWrapperTest.java
+index d32178e..894acce 100644
+--- a/server/base/src/test/java/org/apache/accumulo/server/rpc/RpcWrapperTest.java
++++ b/server/base/src/test/java/org/apache/accumulo/server/rpc/RpcWrapperTest.java
+@@ -288,7 +288,7 @@ public class RpcWrapperTest {
+     }
+ 
+     @Override
+-    public TBase<foo_args,fake_fields> deepCopy() {
++    public foo_args deepCopy() {
+       throw new UnsupportedOperationException();
+     }
+ 
