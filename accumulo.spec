@@ -42,7 +42,7 @@ Patch5: default-conf.patch
 # Fix for updating to flot 0.8 from 0.7 (adds flot.time)
 Patch8: flot8.patch
 # Workaround for https://github.com/jline/jline2/issues/205
-#Patch9: jline-shell-workaround.patch
+Patch9: jline-shell-workaround.patch
 # Fix version number in thrift script
 Patch10: thrift-0.10.0.patch
 # Fix differences with guava version
@@ -373,7 +373,7 @@ cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir
 cp %{buildroot}%{_sysconfdir}/%{name}/log4j.properties %{buildroot}%{_sysconfdir}/%{name}/monitor_logger.properties
 
 # main launcher
-%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:avro/avro:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:google-gson:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper:protobuf-java %{name} true
+%jpackage_script %{main_class} "" "" %{name}:%{name}/%{name}-tserver:jetty:servlet:avro/avro:apache-commons-io:apache-commons-cli:apache-commons-codec:apache-commons-collections:apache-commons-configuration:apache-commons-lang:apache-commons-logging:apache-commons-math:apache-commons-vfs:beust-jcommander:google-gson:guava:hadoop/hadoop-auth:hadoop/hadoop-common:hadoop/hadoop-hdfs:jansi/jansi:jline/jline:libthrift:log4j-1.2.17:slf4j/slf4j-api:slf4j/slf4j-log4j12:zookeeper/zookeeper:protobuf-java:jackson/jackson-mapper-asl:jackson/jackson-core-asl:htrace/htrace-core %{name} true
 # fixup the generated jpackage script
 sed -i -e 's/^#!\/bin\/sh$/#!\/usr\/bin\/bash/' %{buildroot}%{_bindir}/%{name}
 # ensure the java configuration options know which service is being called

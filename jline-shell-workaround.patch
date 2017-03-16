@@ -2,6 +2,32 @@ diff --git a/shell/src/main/java/org/apache/accumulo/shell/Shell.java b/shell/sr
 index 9231c78..0336a67 100644
 --- a/shell/src/main/java/org/apache/accumulo/shell/Shell.java
 +++ b/shell/src/main/java/org/apache/accumulo/shell/Shell.java
+@@ -228,6 +228,7 @@ public class Shell extends ShellOptions implements KeywordExecutable {
+   private long lastUserActivity = System.nanoTime();
+   private boolean logErrorsToConsole = false;
+   private boolean masking = false;
++  private PrintWriter writer = null;
+ 
+   {
+     // set the JLine output encoding to some reasonable default if it isn't already set
+@@ -250,6 +251,8 @@ public class Shell extends ShellOptions implements KeywordExecutable {
+   public Shell(ConsoleReader reader) {
+     super();
+     this.reader = reader;
++    this.writer = new PrintWriter(new OutputStreamWriter(System.out, Charset.forName(System.getProperty("jline.WindowsTerminal.output.encoding",
++System.getProperty("file.encoding")))));
+   }
+ 
+   /**
+@@ -262,6 +265,8 @@ public class Shell extends ShellOptions implements KeywordExecutable {
+   public boolean config(String... args) throws IOException {
+     if (this.reader == null)
+       this.reader = new ConsoleReader();
++    if (this.writer == null)
++      this.writer = new PrintWriter(new OutputStreamWriter(System.out, Charset.forName(System.getProperty("jline.WindowsTerminal.output.encoding", System.getProperty("file.encoding")))));
+     ShellOptionsJC options = new ShellOptionsJC();
+     JCommander jc = new JCommander();
+
 @@ -646,9 +646,10 @@ public class Shell extends ShellOptions {
    }
  
@@ -13,7 +39,7 @@ index 9231c78..0336a67 100644
 +    writer.flush();
      reader.flush();
    }
- 
+
 @@ -676,7 +677,9 @@ public class Shell extends ShellOptions {
        }
      }
